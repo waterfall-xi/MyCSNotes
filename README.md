@@ -1,7 +1,4 @@
 # MyCSNotes
-<<<<<<< HEAD
-Personal Computer Science Learning Notes
-=======
 个人计算机学习笔记
 Personal Computer Science Learning Notes
 
@@ -25,16 +22,17 @@ git init  #Create .git folder in current directory
 git remote add origin git@github.com:githubAccountName/repositoryName.git
 #Unrecommendatory, add https github address as remote
 git remote add origin https://github.com/githubAccountName/repositoryName.git
-git pull -u  origin master
-git branch --set-upstream-to=origin/master master  #Above do this incidentally
+
 git add filename.md
-git commit -m "message of commit"
 git config --global user.email "your-email@example.com"
 git config --global user.name "Your Name"
 #Or local config
 git config user.email "your-email@example.com"
 git config user.name "Your Name"
+git commit -m "message of commit"
+git branch -M master
 git push -u origin master  #Set upstream at first time
+git branch --set-upstream-to=origin/master master  #Above do this incidentally
 git push  #Use this after above
 ```
 
@@ -50,4 +48,6 @@ GitHub home -> account (right top) -> settings -> SSH and GPG kys -> New SSH key
 
 一定要复制全部的`id_rsa.pub`内容，即从`ssh-rsa`到最后。
 Must copy the all content in `id_rsa.pub`, i. e. from `ssh-rsa` to the end.
->>>>>>> d98288d... 20250221-1353 update README.md
+
+
+
