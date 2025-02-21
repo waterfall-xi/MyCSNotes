@@ -16,18 +16,6 @@ Becoming an expert won’t happen overnight, but with a bit of patience, you’l
         Although C++ is technically considered a high-level language, newer programming languages (e.g. scripting languages) provide an even higher level of abstraction. As such, C++ is sometimes inaccurately called a “low-level language” in comparison.
     </p>
 </div>
-<<<<<<< HEAD
-
-<div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px;">
-    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
-        Nomenclature
-    </p>
-    <p style="margin: 0;">
-        Although C++ is technically considered a high-level language, newer programming languages (e.g. scripting languages) provide an even higher level of abstraction. As such, C++ is sometimes inaccurately called a “low-level language” in comparison.
-    </p>
-</div>
-
-=======
 <div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px;">
     <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
         Author’s note
@@ -36,9 +24,6 @@ Becoming an expert won’t happen overnight, but with a bit of patience, you’l
         Today, C++ would probably be more accurately described as a mid-level language. However, this also highlights one of C++’s key strengths: it often provides the ability to work at different levels of abstraction. You can choose to operate at a lower level for better performance and precision, or at a higher level for greater convenience and simplicity.
     </p>
 </div>
-
-
->>>>>>> d98288d... 20250221-1353 update README.md
 <div style="border: 2px solid #c1acff; background-color: #e7dfff; border-radius: 8px; padding: 14px; margin: 5px;">
     <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
         Rule
@@ -168,4 +153,3 @@ A **function** is a collection of statements that get executed sequentially (in 
 
 ## 1.2 — Comments
 
-*123*
