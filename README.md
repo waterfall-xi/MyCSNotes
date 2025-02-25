@@ -48,6 +48,3 @@ GitHub home -> account (right top) -> settings -> SSH and GPG kys -> New SSH key
 
 一定要复制全部的`id_rsa.pub`内容，即从`ssh-rsa`到最后。
 Must copy the all content in `id_rsa.pub`, i. e. from `ssh-rsa` to the end.
-
-
-
