@@ -84,7 +84,9 @@ uesrname@hostname:~$ ls -F ~  #File types symbols
 # ...
 ```
 
-
+```bash
+ls -ld .
+```
 
 
 
@@ -106,6 +108,19 @@ uesrname@hostname:~/Documents$
 `/`: root directory (type all alone);
 
 
+
+```bash
+find . -name "example.txt"  #Find file example.txt in the current directory and its subdirectory.
+```
+
+```bash
+sudo chown $USER:$USER .
+sudo chown xiongyw:xiongyw .
+```
+
+
+
+### Ctrl + C 终止续行模式（左侧出现续行提示符）
 
 ## Reference
 

@@ -313,5 +313,41 @@ Most (but not all) statements in C++ end in a semicolon. If you see a line that 
 
 A **function** is a collection of statements that get executed sequentially (in order, from top to bottom).
 
+**Every C++ program must have a special function named main (all lower case letters)!**
+
 ## 1.2 — Comments
+
+### Single-line comments
+
+```cpp
+std::cout << "Hello world!\n"; // std::cout lives in the iostream library
+std::cout << "It is very nice to meet you!\n"; // these comments make the code hard to read
+std::cout << "Yeah!\n"; // especially when lines are different lengths
+```
+
+Comments for following code:
+
+```cpp
+// std::cout lives in the iostream library
+std::cout << "Hello world!\n";
+```
+
+### Multi-line comments
+
+```cpp
+/* This is a multi-line comment.
+   This line will be ignored.
+   So will this one. */
+/* This is a multi-line comment.
+ * the matching asterisks to the left
+ * can make this easier to read
+ */
+```
+
+Attention: Multi-line style comments can not be nested.
+
+```cpp
+/* This is a multi-line /* comment */ this is not inside the comment */
+// The above comment ends at the first */, not the second */
+```
 
