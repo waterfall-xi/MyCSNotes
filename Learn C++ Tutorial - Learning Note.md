@@ -595,9 +595,10 @@ The **input/output library** (io library) is part of the C++ standard library th
         Best practice
     </p>
     <p style="margin: 1;">
-    <p>Prefer <code>\n</code> over <code>std::endl</code> when outputting text to the console.<br>
-	   在将文本输出到控制台时尽量用 <code>\n</code> 而不是 <code>std::endl</code>。</p>
+    Prefer <code>\n</code> over <code>std::endl</code> when outputting text to the console.<br>
+	在将文本输出到控制台时尽量用 <code>\n</code> 而不是 <code>std::endl</code>。</p>
 </div>
+
 
 ## 1.6 — Uninitialized variables and undefined behavior
 
@@ -626,3 +627,119 @@ int main()
     <p style="margin: 1;">For example, if you run the above program in a Visual Studio debug configuration, it will consistently print -858993460, because that’s the value (interpreted as an integer) that Visual Studio initializes memory with in debug configurations.<br>
 	例如，如果在 Visual Studio 调试配置中运行上述程序，它将始终打印 -858993460，因为这是 Visual Studio 在调试配置中初始化内存时使用的值（解释为整数）。</p>
 </div>
+
+Using uninitialized variables is one of the most common mistakes that novice programmers make, and unfortunately, it can also be one of the most challenging to debug (because the program may run fine anyway if the uninitialized variable happened to get assigned to a spot of memory that had a reasonable value in it, like 0). This is the primary reason for the “always initialize your variables” best practice.
+使用未初始化的变量是新手程序员最常犯的错误之一，不幸的是，它也可能是最具挑战性的调试错误之一（因为如果未初始化的变量碰巧被分配到具有合理值的内存点，例如 0），程序无论如何都可能运行良好。这是 “always initialize your variables” 最佳实践的主要原因。
+
+## 1.7 — Keywords and naming identifiers
+
+### Identifier naming rules
+
+- Can not be a keyword.
+    不能是关键字。
+- Can only be composed of letters (lower or upper case), numbers, and the underscore character.
+    标识符只能由字母（小写或大写）、数字和下划线字符组成。
+- Can not start with a number.
+    不能以数字开头。
+- Case sensitive.
+    区分大小写。
+
+### Identifier naming best practices
+
+A too long strong... Only a portion of the content is captured.
+
+#### variable names
+
+- Begin with a lowercase letter.
+- See acronym to all lowercase word.
+
+#### function names
+
+- Begin with a lowercase letter.
+- See acronym to all lowercase word.
+
+#### structs, class, and enumerations names
+
+- Begin with a capital letter.
+- See acronym to all lowercase word.
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+    When working in an existing program, use the conventions of that program (even if they don’t conform to modern best practices). Use modern best practices when you’re writing new programs.<br>
+	在现有程序中工作时，请使用该程序的约定（即使它们不符合现代最佳实践）。在编写新程序时，请使用现代最佳实践。</p>
+</div>
+
+## 1.8 — Whitespace and basic formatting
+
+### Style guides
+
+A **style guide** is a concise, opinionated document containing (sometimes arbitrary) programming conventions, formatting guidelines, and best practices. The goal of a style guide is to ensure that all developers on a project are programming in a consistent manner.
+Astyle guide 是一个简洁、有主见的文档，包含（有时是任意的）编程约定、格式指南和最佳实践。样式指南的目标是确保项目中的所有开发人员都以一致的方式进行编程。
+
+Some commonly referenced C++ style guides include:
+一些常用的 C++ 样式指南包括：
+
+- [C++ Core Guidelines](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines), maintained by Bjarne Stroustrup and Herb Sutter. 由 Bjarne Stroustrup 和 Herb Sutter 维护。
+- [Google](https://google.github.io/styleguide/cppguide.html).
+- [LLVM](https://llvm.org/docs/CodingStandards.html)
+- [GCC/GNU GCC/GNU](https://gcc.gnu.org/codingconventions.html)
+
+We generally favor the C++ Core Guidelines, as they are up to date and widely applicable.
+我们通常支持 C++ 核心指南，因为它们是最新的并且广泛适用。
+
+## 1.9 — Introduction to literals and operators
+
+### Literals
+
+A **literal** (also known as a **literal constant**) is a fixed value that has been inserted directly into the source code.
+
+一个字面值（也称为 aliteral constant）是一个直接插入源代码的固定值。
+
+### Operators
+
+An **operation** is a process involving zero or more input values (called **operands**) that produces a new value (called an *output value*). An **operator** is a symbol used to denoted that perform a specific operation.
+运算是涉及零个或多个输入值（称为作数）的过程，它产生一个新值（称为输出值）。运算符是被用来表示要执行某个特定运算的符号。
+
+- **Unary**
+- **Binary**
+- **Ternary**
+- **Nullary**
+
+### Return values and side effect
+
+## 1.10 — Introduction to expressions
+
+In general programming, an **expression** is a non-empty sequence of literals, variables, operators, and function calls that calculates a value. The process of executing an expression is called **evaluation**, and the resulting value produced is called the **result** of the expression (also sometimes called the **return value**).
+在一般编程中，anexpression 是计算值的文本、变量、运算符和函数调用的非空序列。执行表达式的过程称为 evaluation，生成的结果值称为表达式的结果（有时也称为返回值）。
+
+<div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        For advanced readers
+    </p>
+    <p style="margin: 1;">
+        In C++, the result of an expression is one of the following:<br>
+		A value (most commonly) 值（最常见）<br>
+		An object or a function. We discuss expressions that return objects in lesson 12.2 -- Value categories (lvalues and rvalues). 对象或函数。我们在 lesson12.2 -- Value categories (lvalues and rvalues) 中讨论返回对象的表达式。<br>
+		Nothing. These are the result of non-value returning function calls (covered in lesson 2.3 -- Void functions (non-value returning functions)) that are called only for their side effects 无。 这些是非值返回函数调用的结果（在 lesson2.3 -- Void functions (non-value returning functions) 中介绍），这些调用仅用于其副作用
+    </p>
+</div>
+
+## 1.11 — Developing your first program
+
+# C++ Basics: Functions and Files
+
+## 2.1 — Introduction to functions
+
+A **function** is a reusable sequence of statements designed to do a particular job.
+
+```cpp
+returnType functionName() // This is the function header (tells the compiler about the existence of the function)
+{
+    // This is the function body (tells the compiler what the function does)
+}
+```
+
+### Nested functions are not supported
