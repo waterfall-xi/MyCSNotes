@@ -16,8 +16,6 @@ Becoming an expert won’t happen overnight, but with a bit of patience, you’l
         Although C++ is technically considered a high-level language, newer programming languages (e.g. scripting languages) provide an even higher level of abstraction. As such, C++ is sometimes inaccurately called a “low-level language” in comparison.
     </p>
 </div>
-
-
 <div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px;">
     <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
         Author’s note
@@ -35,7 +33,6 @@ Becoming an expert won’t happen overnight, but with a bit of patience, you’l
         Rules are instructions that you <i>must</i> do, as required by the language. Failure to abide by a rule will generally result in your program not working.
     </p>
 </div>
-
 <div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
     <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
         Best practice
@@ -44,6 +41,7 @@ Becoming an expert won’t happen overnight, but with a bit of patience, you’l
         Best practices are things that you <i>should</i> do, because that way of doing things is either conventional (idiomatic) or recommended. That is, either everybody does it that way (and if you do otherwise, you’ll be doing something people don’t expect), or it is generally superior to the alternatives.
     </p>
 </div>
+
 <div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
     <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
         Key insight
@@ -52,7 +50,6 @@ Becoming an expert won’t happen overnight, but with a bit of patience, you’l
         Key insight
     </p>
 </div>
-
 
 <div style="border: 2px solid #d89696; background-color: #ffd6d6; border-radius: 8px; padding: 14px; margin: 5px;">
     <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
@@ -743,3 +740,140 @@ returnType functionName() // This is the function header (tells the compiler abo
 ```
 
 ### Nested functions are not supported
+
+## 2.2 — Function return values (value-returning functions)
+
+```cpp
+#include <iostream>
+// int is the return type
+// A return type of int means the function will return some integer value to the caller (the specific value is not specified here)
+int returnFive()
+{
+    // the return statement provides the value that will be returned
+    return 5; // return the value 5 back to the caller
+}
+
+int main()
+{
+    std::cout << returnFive() << '\n'; // prints 5
+    std::cout << returnFive() + 2 << '\n'; // prints 7
+
+    returnFive(); // okay: the value 5 is returned, but is ignored since main() doesn't do anything with it
+
+    return 0;
+}
+```
+
+<div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Nomenclature
+    </p>
+    <p style="margin: 1;">
+        The return expression produces the value to be returned. The return value is a copy of that value.<br>
+		return 表达式生成要返回的值。返回值是该值的副本。
+    </p>
+</div>
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Key insight
+    </p>
+    <p style="margin: 1;">
+        C does allow <code>main()</code> to be called explicitly, so some C++ compilers will allow this for compatibility reasons.<br>
+        C 语言允许显式调用 <code>main()</code>，因此出于兼容性原因，一些 C++ 编译器将允许这样做。
+    </p>
+</div>
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+    Make sure your functions with non-void return types return a value in all cases.<br>
+	确保具有非 void 返回类型的函数在所有情况下都返回值。<br>
+	Failure to return a value from a value-returning function will cause undefined behavior.<br>
+    未能从值返回函数返回值将导致未定义的行为。</p>
+</div>
+
+## 2.3 — Void functions (non-value returning functions)
+
+```cpp
+void printHi() // This function is non-value returning
+{
+    std::cout << "In printHi()" << '\n';
+    return; // OK, return in advance and do not execute subsequent statements
+    std::cout << "Hi!" << '\n';
+    return 5; // compile error: we're trying to return a value
+}
+```
+
+**Void function can use return statement to return to the caller at the point where the return statement is executed**
+
+**Void functions can’t be used in expression that require a value**
+
+## 2.4 — Introduction to function parameters and arguments
+
+```cpp
+#include <iostream>
+
+int getValueFromUser()
+{
+ 	std::cout << "Enter an integer: ";
+	int input{};
+	std::cin >> input;
+	return input;
+}
+
+void printDouble(int value)
+{
+	std::cout << value << " doubled is: " << value * 2 << '\n';
+}
+
+int main()
+{
+	printDouble(getValueFromUser());
+	return 0;
+}
+```
+
+### Unreferenced parameters and unnamed parameters
+
+In certain cases, you will encounter functions that have parameters that are not used in the body of the function. These are called **unreferenced parameters**.
+在某些情况下，您会遇到具有函数体中未使用的参数的函数。这些参数称为 unreferenced 参数。
+
+In a function definition, the name of a function parameter is optional. Therefore, in cases where a function parameter needs to exist but is not used in the body of the function, you can simply omit the name. A parameter without a name is called an **unnamed parameter**.
+在函数定义中，函数参数的名称是可选的。因此，如果函数参数需要存在但未在函数主体中使用，则只需省略该名称即可。没有名称的参数称为 anunnamed 参数。
+
+<div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Author’s note
+    </p>
+    <p style="margin: 1;">
+        Why we’d write a function that has a parameter whose value isn’t used? 为什么我们要编写一个具有 value 未使用的参数的函数？<br>
+		Let’s say we have a function with a single parameter. Later, the function is updated in some way, and the value of the parameter is no longer needed. If the now-unused function parameter were simply removed, then every existing call to the function would break (because the function call would be supplying more arguments than the function could accept). This would require us to find every call to the function and remove the unneeded argument. This might be a lot of work (and require a lot of retesting). It also might not even be possible (in cases where we did not control all of the code calling the function). So instead, we might leave the parameter as it is, and just have it do nothing. 假设我们有一个带有单个参数的函数。稍后，该函数以某种方式更新，并且不再需要参数的值。如果简单地删除了现在未使用的函数参数，那么对该函数的每个现有调用都会中断（因为函数调用将提供比函数可以接受的更多的参数）。这将要求我们找到对函数的每个调用并删除不需要的参数。这可能是大量的工作（并且需要大量的重新测试）。它甚至可能是不可能的（在我们没有控制调用该函数的所有代码的情况下）。因此，相反，我们可能会保持参数不变，让它什么都不做。
+    </p>
+</div>
+
+<div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        For advanced readers
+    </p>
+    <p style="margin: 1;">
+        Other cases where this occurs: 发生这种情况的其他情况：<br>
+		Operators ++ and -- have prefix and postfix variants (e.g. ++foo vs foo++). An unreferenced function parameter is used to differentiate whether an overload of such an operator is for the prefix or postfix case. We cover this in lesson 21.8 -- Overloading the increment and decrement operators.
+运算符++和--具有前缀和后缀变体（例如++foovsfoo++）。未引用的函数参数用于区分此类运算符的重载是针对前缀还是后缀大小写。我们将在课程中21.8 -- Overloading the increment and decrement operators介绍这一点。<br>
+When we need to determine something from the type (rather than the value) of a type template parameter.
+当我们需要从类型模板参数的类型（而不是值）中确定某些内容时。
+
+    </p>
+
+</div>
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+    When a function parameter exists but is not used in the body of the function, do not give it a name. You can optionally put a name inside a comment.<br>
+	当函数参数存在但未在函数正文中使用时，请勿为其命名。您可以选择在注释中放置名称。</p>
+</div>
