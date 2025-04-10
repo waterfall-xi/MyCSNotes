@@ -864,9 +864,7 @@ In a function definition, the name of a function parameter is optional. Therefor
 运算符++和--具有前缀和后缀变体（例如++foovsfoo++）。未引用的函数参数用于区分此类运算符的重载是针对前缀还是后缀大小写。我们将在课程中21.8 -- Overloading the increment and decrement operators介绍这一点。<br>
 When we need to determine something from the type (rather than the value) of a type template parameter.
 当我们需要从类型模板参数的类型（而不是值）中确定某些内容时。
-
     </p>
-
 </div>
 
 <div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
@@ -877,3 +875,116 @@ When we need to determine something from the type (rather than the value) of a t
     When a function parameter exists but is not used in the body of the function, do not give it a name. You can optionally put a name inside a comment.<br>
 	当函数参数存在但未在函数正文中使用时，请勿为其命名。您可以选择在注释中放置名称。</p>
 </div>
+## 2.5 — Introduction to local scope
+
+### local variables
+
+1. defined inside the body of a function
+2. function parameters
+
+### local variable lifetime
+
+Determine if local variable exist in memory. 决定局部变量是否存在于内存空间。
+
+for local variable inside the function body:
+
+- Begin at the point of definition, end at the end of curly braces. 在定义处开始，大括号末尾结束。
+- Destroyed in the opposite order of creation. 以和创建顺序相反的顺序销毁。
+
+for function parameter:
+
+- Begin at the enter point of function, and at the end of the function. 在进入函数处开始，函数末尾结束。
+- Destroyed in the opposite order of creation. 以和创建顺序相反的顺序销毁。
+
+<div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        For advanced readers
+    </p>
+    <p style="margin: 1;">
+        In actuality, objects may be created earlier, or destroyed later for optimization purposes.<br>
+		实际上，对象可以提前创建，也可以稍后销毁以进行优化。
+    </p>
+</div>
+
+**lifetime is a runtime property.**
+The variable creation and destruction happen when the program is running. 变量创建和销毁发生在运行时。
+
+### local scope (block scope)
+
+Determine if local variable identifier can be used. 决定局部变量标识符是否可以使用。
+
+for local variable identifier inside the function body:
+
+- Begin at the point of definition, end at the end of curly braces. 在定义处开始，大括号末尾结束。
+
+for function parameter identifier:
+
+- Begin at the point of definition, end at the end of curly braces. 在定义处开始，大括号末尾结束。
+
+**Scope is a compile-time property.**
+Trying to use an identifier when it is not in scope will result in a compile error. 尝试在作用域外使用标识符会导致编译错误。
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+    Define your local variables as close to their first use as reasonable.<br>
+	尽可能接近其首次使用的位置进行局部变量定义。</p>
+</div>
+
+## 2.6 — Why functions are useful, and how to use them effectively
+
+- Groups of statements that appear more than once in a program should generally be made into a function. For example, if we’re reading input from the user multiple times in the same way, that’s a great candidate for a function. If we output something in the same way in multiple places, that’s also a great candidate for a function.
+    在程序中多次出现的语句组通常应组成函数。例如，如果我们以相同的方式多次读取用户的输入，那么这就是函数的一个很好的候选者。如果我们在多个地方以相同的方式输出一些东西，那也是一个很好的函数候选者。
+- Code that has a well-defined set of inputs and outputs is a good candidate for a function, (particularly if it is complicated). For example, if we have a list of items that we want to sort, the code to do the sorting would make a great function, even if it’s only done once. The input is the unsorted list, and the output is the sorted list. Another good prospective function would be code that simulates the roll of a 6-sided dice. Your current program might only use that in one place, but if you turn it into a function, it’s ready to be reused if you later extend your program or in a future program.
+    具有一组明确定义的输入和输出的代码是函数的良好候选者（尤其是在函数很复杂的情况下）。例如，如果我们有一个要排序的项目列表，那么进行排序的代码将成为一个很棒的功能，即使它只执行一次。input 是未排序的列表，output 是排序列表。另一个很好的 Prospective 函数是模拟 6 面骰子掷骰子的代码。您当前的程序可能只在一个地方使用它，但是如果您将其转换为函数，则当您以后扩展程序或将来的程序时，它就可以重用。
+- A function should generally perform one (and only one) task.
+    一个函数通常应该执行一个（且只有一个）任务。
+- When a function becomes too long, too complicated, or hard to understand, it can be split into multiple sub-functions. This is called **refactoring**. We talk more about refactoring in lesson [3.10 -- Finding issues before they become problems](https://www.learncpp.com/cpp-tutorial/finding-issues-before-they-become-problems/).
+    当一个函数变得太长、太复杂或难以理解时，它可以被拆分为多个子函数。这称为重构。我们在 lesson[3.10 -- Finding issues before they become problems](https://www.learncpp.com/cpp-tutorial/finding-issues-before-they-become-problems/) 中更多地讨论 refactoring。
+
+## 2.7 — Forward declarations and definitions
+
+### Use a forward declaration
+
+A **forward declaration** allows us to tell the compiler about the existence of an identifier *before* actually defining the identifier.
+Aforward 声明允许我们在实际定义标识符之前告诉编译器标识符的存在。
+
+```cpp
+#include <iostream>
+
+int add(int x, int y); // forward declaration of add() (function declaration). Compile error is produced without this.
+
+int main()
+{
+    std::cout << "The sum of 3 and 4 is: " << add(3, 4) << '\n'; // this works because we forward declared add() above
+    return 0;
+}
+
+int add(int x, int y) // even though the body of add() isn't defined until here
+{
+    return x + y;
+}
+```
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+    Keep the parameter names in your function declarations.<br>
+	将参数名称保留在函数声明中。</p>
+</div>
+
+### The one definition rule (ODR)
+
+1. Within a *file*, each function, variable, type, or template in a given scope can only have one definition. Definitions occurring in different scopes (e.g. local variables defined inside different functions, or functions defined inside different namespaces) do not violate this rule.
+    在一个文件中，给定范围内的每个函数、变量、类型或模板只能有一个定义。出现在不同作用域中的定义（例如，在不同函数内定义的局部变量，或在不同命名空间内定义的函数）不违反此规则。
+2. Within a *program*, each function or variable in a given scope can only have one definition. This rule exists because programs can have more than one file (we’ll cover this in the next lesson). Functions and variables not visible to the linker are excluded from this rule (discussed further in lesson [7.6 -- Internal linkage](https://www.learncpp.com/cpp-tutorial/internal-linkage/)).
+    在一个程序中，给定作用域中的每个函数或变量只能有一个定义。这条规则之所以存在，是因为程序可以有多个文件（我们将在下一课中介绍这一点）。对链接器不可见的函数和变量被排除在此规则之外（将在 lesson[7.6 -- Internal linkage](https://www.learncpp.com/cpp-tutorial/internal-linkage/) 中进一步讨论）。
+3. Types, templates, inline functions, and inline variables are allowed to have duplicate definitions in different files, so long as each definition is identical. We haven’t covered what most of these things are yet, so don’t worry about this for now -- we’ll bring it back up when it’s relevant.
+    类型、模板、内联函数和内联变量允许在不同的文件中具有重复的定义，只要每个定义都相同即可。我们还没有介绍其中的大部分内容，所以现在不用担心 - 我们会在相关时重新提出来。
+
+Violating part 1 of the ODR will cause the compiler to issue a redefinition error. Violating ODR part 2 will cause the linker to issue a redefinition error. Violating ODR part 3 will cause undefined behavior.
+违反 ODR 的第 1 部分将导致编译器发出重新定义错误。违反 ODR 第 2 部分将导致链接器发出重新定义错误。违反 ODR 第 3 部分将导致未定义的行为。
