@@ -988,3 +988,133 @@ int add(int x, int y) // even though the body of add() isn't defined until here
 
 Violating part 1 of the ODR will cause the compiler to issue a redefinition error. Violating ODR part 2 will cause the linker to issue a redefinition error. Violating ODR part 3 will cause undefined behavior.
 违反 ODR 的第 1 部分将导致编译器发出重新定义错误。违反 ODR 第 2 部分将导致链接器发出重新定义错误。违反 ODR 第 3 部分将导致未定义的行为。
+
+## 2.8 — Programs with multiple code files
+
+C++ is designed so that each source file can be compiled independently, with no knowledge of what is in other files. Therefore, the order in which files are actually compiled should not be relevant.
+C++ 的设计使每个源文件都可以独立编译，而不知道其他文件中的内容。因此，文件的实际编译顺序应该无关紧要。
+
+```cpp
+// main.cpp
+#include <iostream>
+
+int add(int x, int y); // needed so main.cpp knows that add() is a function defined elsewhere
+
+int main()
+{
+    std::cout << "The sum of 3 and 4 is: " << add(3, 4) << '\n';
+    return 0;
+}
+```
+
+```cpp
+// add.cpp
+int add(int x, int y)
+{
+    return x + y;
+}
+```
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Tip
+    </p>
+    <p style="margin: 1;">
+        Because the compiler compiles each code file individually (and then forgets what it has seen), each code file that uses <code>std::cout</code> or <code>std::cin</code> needs to <code>#include &lt;iostream&gt;</code>.<br>
+        因为编译器单独编译每个代码文件（然后忘记了它所看到的内容），所以每个使用 std：：coutorstd：：cin 的代码文件都需要 #include 。
+    </p>
+</div>
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Key insight
+    </p>
+    <p style="margin: 1;">
+        How linker or compiler connect identifier to its definition?
+    </p>
+    <p style="margin: 1;">
+        If the compiler has seen neither a forward declaration nor a definition for the identifier in the file being compiled, it will error at the point where the identifier is used.<br>
+        如果编译器在正在编译的文件中既没有看到 forward 声明，也没有看到 identifier 的定义，它将在使用该 identifier 时出错。
+    </p>
+    <p style="margin: 1;">
+        Otherwise, if a definition exists in the same file, the compiler will connect the use of the identifier to its definition.<br>
+        否则，如果定义存在于同一文件中，编译器会将标识符的使用与其定义相关联。
+    </p>
+    <p style="margin: 1;">
+        Otherwise, if a definition exists in a different file (and is visible to the linker), the linker will connect the use of the identifier to its definition.<br>
+        否则，如果定义存在于其他文件中（并且对链接器可见），则链接器会将标识符的使用连接到其定义。
+    </p>
+    <p style="margin: 1;">
+        Otherwise (the compiler has seen a forward but no definition exists in any other file), the linker will issue an error indicating that it couldn’t find a definition for the identifier.<br>
+        否则（编译器看到 forward 声明但是在其他任何文件都没有定义存在），链接器将发出一个错误，指示它找不到标识符的定义。
+    </p>
+</div>
+
+## 2.9 — Naming collisions and an introduction to namespaces
+
+C++ requires that all identifiers be non-ambiguous.
+C++ 要求所有标识符都是无歧义的。
+
+Two (or more) identically named functions (or global variables) are introduced into separate files belonging to the same program. This will result in a linker error, as shown above.
+
+1. Two (or more) identically named functions (or global variables) are introduced into separate files belonging to the same program. This will result in a linker error.
+    两个（或多个）同名函数（或全局变量）被引入**属于同一程序的单独文件**中。这将导致**链接器错误**。
+2. Two (or more) identically named functions (or global variables) are introduced into the same file. This will result in a compiler error.
+    两个（或多个）同名函数（或全局变量）被引入到**同一个文件**中。这将导致编译器错误。
+
+A **namespace** provides another type of scope region for disambiguation of naming. The names declared in a namespace are isolated from names declared in other scopes, allowing such names to exist without conflict.
+namespace提供了另一种类型的范围区域以消除命名歧义。在命名空间中声明的名称与其他范围内声明的名称隔离，从而允许此类名称存在而不会发生冲突。
+
+### std namespace
+
+C++ moved all of the functionality in the standard library into a namespace named `std` (short for “standard”).
+C++将标准库中的所有功能移动到名为 `std`（“standard”的缩写）的命名空间中。
+
+```CPP
+#include <iostream>
+
+int main()
+{
+    std::cout << "Hello world!"; // when we say cout, we mean the cout defined in the std namespace
+    return 0;
+}
+```
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+    Use explicit namespace prefixes to access identifiers defined in a namespace.<br>
+	使用显式命名空间前缀来访问命名空间中定义的标识符。
+	</p>
+</div>
+
+### Using namespace std (and why to avoid it)
+
+```CPP
+#include <iostream>
+
+using namespace std; // this is a using-directive that allows us to access names in the std namespace with no namespace prefix
+
+int main()
+{
+    cout << "Hello world!";
+    return 0;
+}
+```
+
+If another cout is defined in the global namespace, the naming conflict will happened.
+如果在全局命名空间又定义另一个 cout，则发生命名冲突。
+
+<div style="border: 2px solid #d89696; background-color: #ffd6d6; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Warning
+    </p>
+    <p style="margin: 1;">
+        Avoid using-directives (such as <code>using namespace std;</code>) at the top of your program or in header files. They violate the reason why namespaces were added in the first place.<br>
+        避免在程序顶部或头文件中使用 using 指令（例如using namespace std;）。它们违反了最初添加命名空间的原因。
+    </p>
+</div>
+
+## 2.10 — Introduction to the preprocessor
