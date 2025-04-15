@@ -6,7 +6,7 @@ LearnCpp.com is a free website devoted to teaching you how to program in modern 
 
 Becoming an expert won’t happen overnight, but with a bit of patience, you’ll get there. And LearnCpp.com will show you the way.
 
-# Introduction / Getting Started
+# 0 Introduction / Getting Started
 
 <div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px">
     <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
@@ -726,7 +726,7 @@ In general programming, an **expression** is a non-empty sequence of literals, v
 
 ## 1.11 — Developing your first program
 
-# C++ Basics: Functions and Files
+# 2 C++ Basics: Functions and Files
 
 ## 2.1 — Introduction to functions
 
@@ -1118,3 +1118,658 @@ If another cout is defined in the global namespace, the naming conflict will hap
 </div>
 
 ## 2.10 — Introduction to the preprocessor
+
+### Preprocessor directives 预处理器指令
+
+**Preprocessor directives** (often just called *directives*) are instructions that start with a `#` symbol and end with a newline (NOT a semicolon). 预处理器指令（通常简称为指令）是以 a#symbol 开头并以换行符（不是分号）结尾的指令。
+
+#### #include
+
+When *#include* a file, the preprocessor replaces the #include directive with the contents of the included file.
+
+#### Macro defines
+
+In C++, a **macro** is a rule that defines how input text is converted into replacement output text.
+
+```cpp
+#define IDENTIFIER substitution_text
+// MACRO_NAME ==> substitution_text
+```
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+    Macro names should be written in all uppercase letters, with words separated by underscores.<br>
+	宏名称应全部使用大写字母书写，单词之间用下划线分隔。
+	</p>
+</div>
+
+**Object-like macros with substitution text**
+
+```cpp
+#include <iostream>
+
+#define MY_NAME "Alex"
+
+int main()
+{
+    std::cout << "My name is: " << MY_NAME << '\n';
+    // preprocessor converts into the following:
+    std::cout << "My name is: " << "Alex" << '\n';
+    return 0;
+}
+```
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+    In C++ there are better alternatives than object-like macros with substitution text(see 7.10 -- Sharing global constants across multiple files (using inline variables)). <br>
+	C++中有比带替代文本的 object-like 宏更好的替代方案（见 7.10）。
+	</p>
+</div>
+
+**Object-like macros without substitution text for conditional compilation**
+
+```cpp
+#include <iostream>
+
+#define PRINT_JOE
+
+int main()
+{
+#ifdef PRINT_JOE
+    std::cout << "Joe\n"; // will be compiled since PRINT_JOE is defined
+#endif
+
+#ifdef PRINT_BOB
+    std::cout << "Bob\n"; // will be excluded since PRINT_BOB is not defined
+#endif
+
+    return 0;
+}
+```
+
+```cpp
+#include <iostream>
+
+int main()
+{
+    std::cout << "Joe\n";
+
+#if 0 // Don't compile anything starting here, change to 1 to enable
+    std::cout << "Bob\n";
+    std::cout << "Steve\n";
+#endif // until this point
+
+    return 0;
+}
+```
+
+## 2.11 — Header files
+
+Conventionally, header files (.h) are used to propagate a bunch of related forward declarations into a code file.
+通常，头文件（.h）用于将一组相关的 forward 声明传播到 cpp 文件中。
+
+```
+#include <iostream>
+```
+
+`#include` a header file make it easy to copy all declarations for using library iostream.
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+    If a header file is paired with a code file (e.g. add.h with add.cpp), they should both have the same base name (add).<br>
+	如果头文件与代码文件配对（例如，add.h 与 add.cpp），则它们都应该具有相同的基本名称 （add）。
+	</p>
+</div>
+
+**Including definitions in a header file will result in a violation of the one-definition rule**
+
+**在头文件中包括定义将导致违反单定义规则**
+
+**Source files should include their paired header** 
+**源文件应包含其配对的头文件**
+
+**Do not #include .cpp files**
+
+**不要 #include .cpp 文件**
+
+### Angled brackets vs double quotes
+
+#### Angled brackets
+
+Search only in the directories specified by the `include directories` (come with your compiler, OS, or third-party libraries you’ve installed elsewhere on your system). The preprocessor will not search for the header file in your project’s source code directory.
+只在特定的 include 目录（编译器、作系统或已安装在系统其他位置的第三方库附带的）搜索，预处理器不会在项目的源代码目录中搜索头文件。
+
+#### Double quotes
+
+First search in the current directory. If it can’t find, then search the `include directories`.
+先在当前目录搜索，如果没有再搜索 include 目录。
+
+| Header type           | Naming convention | Example    | Identifiers placed in namespace                         |
+| --------------------- | ----------------- | ---------- | ------------------------------------------------------- |
+| C++ specific (new)    | <xxx>             | iostream   | std namespace                                           |
+| C compatibility (new) | <cxxx>            | cstddef    | std namespace (required) & global namespace (optional)  |
+| C++ specific (old)    | <xxx.h>           | iostream.h | global namespace                                        |
+| C compatibility (old) | <xxx.h>           | stddef.h   | global namespace (required) & std  namespace (optional) |
+
+### Including header files from other directories
+
+Bad way (may won’t work after update directory structure):
+
+```
+#include "headers/myHeader.h"
+#include "../moreHeaders/myOtherHeader.h"
+```
+
+A better method is to tell your compiler or IDE that you have a bunch of header files in some other location, so that it will look there when it can’t find them in the current directory. This can generally be done by setting an *include path* or *search directory* in your IDE project settings.
+更好的方法是告诉你的编译器或 IDE 在其他位置有一堆头文件，这样当它在当前目录中找不到它们时，它会在那里查找。这通常可以通过在 IDE 项目设置中设置 include pathorsearch directory来完成。
+
+### The order of inclusion for header files
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+    To maximize the chance that missing includes will be flagged by compiler, order your #includes as follows (skipping any that are not relevant):
+<br>
+	为了最大限度地提高编译器标记缺少的 include 的几率，请按如下方式对 #includes 进行排序（跳过任何不相关的内容）：
+	</p>
+    <p style="margin: 1;">
+    ● The paired header file for this code file (e.g. add.cpp should #include "add.h")<br>
+	● Other headers from the same project (e.g. #include "mymath.h")<br>
+	● 3rd party library headers (e.g. #include <boost/tuple/tuple.hpp>)<br>
+	● Standard library headers (e.g. #include <iostream>)
+	</p>
+</div>
+
+## 2.12 — Header guards
+
+### The duplicate definition problem
+
+```cpp
+#ifndef SQUARE_H
+#define SQUARE_H
+
+int getSquareSides(); // forward declaration for getSquareSides
+int getSquarePerimeter(int sideLength); // forward declaration for getSquarePerimeter
+
+#endif
+```
+
+## 2.13 — How to design your first programs
+
+# 3 Debugging C++ Programs
+
+
+
+# 4 Fundamental Data Types
+
+## 4.1 — Introduction to fundamental data types
+
+> To be completed
+
+## 4.12 — Introduction to type conversion and static_cast
+
+### Implicit type conversion
+
+```cpp
+#include <iostream>
+
+void print(double x) // print takes a double parameter
+{
+	std::cout << x << '\n';
+}
+
+int main()
+{
+	print(5); // what happens when we pass an int value?
+	return 0;
+}
+```
+
+Implicit type conversion: int => double
+
+```cpp
+#include <iostream>
+
+void print(int x) // print now takes an int parameter
+{
+	std::cout << x << '\n';
+}
+
+int main()
+{
+	print(5.5); // warning: we're passing in a double value
+	return 0;
+}
+```
+
+Implicit type conversion: double => int (possible warning)
+
+**Type conversion of a value produces a new value**
+
+### explicit type conversion via the static_cast operator
+
+**Explicit type conversion** allow us (the programmer) to explicitly tell the compiler to convert a value from one type to another type, and that we take full responsibility for the result of that conversion. If such a conversion results in the loss of value, the compiler will not warn us.
+显式类型转换允许我们（程序员）显式告诉编译器将值从一种类型转换为另一种类型，并且我们对该转换的结果负全部责任。如果此类转换导致值丢失，编译器不会警告我们。
+
+```cpp
+static_cast<new_type>(expression)
+```
+
+#### Sign conversions using static_cast
+
+If the value being converted is in the value scope of destination type.
+如果要转换的值在目标类型的取值范围内。
+
+```cpp
+    unsigned int u1 { 5 };
+    // Convert value of u1 to a signed int
+    int s1 { static_cast<int>(u1) };
+    std::cout << s1 << '\n'; // prints 5
+
+    int s2 { 5 };
+    // Convert value of s2 to an unsigned int
+    unsigned int u2 { static_cast<unsigned int>(s2) };
+    std::cout << u2 << '\n'; // prints 5
+```
+
+Otherwise, something specially happen.
+
+```cpp
+    int s { -1 };
+    std::cout << static_cast<unsigned int>(s) << '\n'; // prints 4294967295
+
+    unsigned int u { 4294967295 }; // largest 32-bit unsigned int
+    std::cout << static_cast<int>(u) << '\n'; // implementation-defined prior to C++20, -1 as of C++20
+```
+
+**std::int8_t and std::uint8_t likely behave like chars instead of integers**
+std：：int8_t 和 std：：uint8_t 的行为可能类似于 chars 而不是整数
+
+# 5 Constants and Strings
+
+## 5.1 — Constant variables (named constants)
+
+### Named constants
+
+- Constant variables 常量变量
+- Object-like macros with substitution text (introducced in 2.10) 带有替换文本的类对象宏 (2.10 中介绍)
+- Enumerated constants (see 13.2) 枚举常量
+
+#### Constant variables
+
+Although it is a well-known oxymoron, a variable whose value cannot be changed after initialization is called a **constant variable**.
+虽然它是一个众所周知的矛盾修辞法，但初始化后无法更改其值的变量称为 constant 变量。
+
+```cpp
+const double gravity { 9.8 };  // preferred use of const before type
+int const sidesInSquare { 4 }; // "east const" style, okay but not preferred
+```
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+    Place <code>const</code> before the type (because it is more conventional to do so).<br>
+	把 <code>const</code> 放在类型前面，因为这样是更规范的做法。
+	</p>
+</div>
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Key insight
+    </p>
+    <p style="margin: 1;">
+    The type of an object includes the const qualifier, so when we define const double gravity { 9.8 }; the type of gravity is const double.<br>
+    对象的类型包括 const 限定符，因此当我们定义 const double gravity { 9.8 }; gravity 是 const double 的类型。
+    </p>
+</div>
+
+**Const variables must be initialized**
+**必须初始化 Const 变量**
+
+Const variables naming conventions:
+
+- C: underscored, upper-case, e.g. EARTH_GRAVITY
+- some C++: intercapped with a ‘k’ prefix, e.g. kEarthGravity
+- normal C++: just follow normal variables
+
+**Const function parameters (do not)**
+
+```cpp
+void printInt(const int x)
+{
+    std::cout << x << '\n';
+}
+```
+
+In modern C++ we don’t make value parameters `const` because value parameters is just a copy that will be destroyed at the end of the function anyway. The `const` keyword also adds a small amount of unnecessary clutter to the function prototype.
+
+**Const return values (do not)**
+
+```cpp
+const int getValue()
+{
+    return 5;
+}
+```
+
+For fundamental types, simply ignored (your compiler may generate a warning). 对于基本类型，将被简单地忽略（编译器可能会生成警告）。
+For other types, there is typically little point in returning const objects by value, because they are temporary copies that will be destroyed anyway. 对于其他类型，按值返回 const 对象通常没有什么意义，因为它们是临时副本，无论如何都会被销毁。
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+    Make variables constant whenever possible. Exception cases include by-value function parameters and by-value return types, which should generally not be made constant.<br>
+	尽可能使变量成为常量。例外情况包括按值函数参数和按值返回类型，它们通常不应成为常量。
+	</p>
+</div>
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+    Prefer constant variables over object-like macros with substitution text.<br>
+	首选常量变量，而不是带有替换文本的类对象宏。
+	</p>
+</div>
+
+const is a **type qualifiers**
+
+## 5.2 — Literals
+
+```cpp
+return 5;                     // 5 is an integer literal
+bool myNameIsAlex { true };   // true is a boolean literal
+double d { 3.4 };             // 3.4 is a double literal
+std::cout << "Hello, world!"; // "Hello, world!" is a C-style string literal
+```
+
+type of literal
+
+| Literal value        | Examples             | Default literal type | Note                                                         |
+| -------------------- | -------------------- | -------------------- | ------------------------------------------------------------ |
+| integer value        | 5, 0, -3             | int                  |                                                              |
+| boolean value        | true, false          | bool                 |                                                              |
+| floating point value | 1.2, 0.0, 3.4        | double (not float!)  |                                                              |
+| character            | ‘a’, ‘\n’ 'a'， '\n' | char                 |                                                              |
+| C-style string       | “Hello, world!”      | const char[14]       | see C-style string literals section below<br/>请参阅下面的 C 样式字符串文本部分 |
+
+adding a **literal suffix** to change the type of a literal
+
+| Data type      | Suffix                                 | Meaning                                   |
+| -------------- | -------------------------------------- | ----------------------------------------- |
+| integral       | u or U                                 | unsigned int                              |
+| integral       | l or L                                 | long                                      |
+| integral       | ul, uL, Ul, UL, lu, lU, Lu, LU         | unsigned long                             |
+| integral       | ll or LL                               | long long                                 |
+| integral       | ull, uLL, Ull, ULL, llu, llU, LLu, LLU | unsigned long long                        |
+| integral       | z or Z                                 | The signed version of std::size_t (C++23) |
+| integral       | uz, uZ, Uz, UZ, zu, zU, Zu, ZU         | std::size_t (C++23)                       |
+| floating point | f or F                                 | float                                     |
+| floating point | l or L                                 | long double                               |
+| string         | s                                      | std::string                               |
+| string         | sv                                     | std::string_view                          |
+
+**Scientific notation for floating point literals**
+
+```cpp
+double avogadro { 6.02e23 }; // 6.02 x 10^23 is a double literal in scientific notation
+double protonCharge { 1.6e-19 }; // charge on a proton is 1.6 x 10^-19
+```
+
+### String literals
+
+**For historical reasons, strings are not a fundamental type in C++.**
+
+**C strings** or **C-style strings**
+
+1. implicit null terminator: `"hello"`=`'h'`, `'e'`, `'l`‘, `'l'`, `'o'`, and `'\0'`
+2. C-style string literals are const objects that are created at the start of the program and are guaranteed to **exist for the entirety of the program**.
+
+## 5.3 — Numeral systems (decimal, binary, hexadecimal, and octal)
+
+## 5.4 – as-if 规则和编译时优化
+
+## 5.5 — Constant expressions
+
+```cpp
+const double x { 1.2 };
+const double y { 3.4 };
+const double z { x + y }; // x + y may evaluate at runtime or compile-time
+```
+
+The expression `x + y` would normally evaluate at runtime, but since the value of `x` and `y` are known at compile-time, the compiler may opt to perform compile-time evaluation instead and initialize `z` with the compile-time calculated value `4.6`.
+表达式 x + y 通常会在运行时计算，但由于 x 和 y 的值在编译时是已知的，因此编译器可以选择执行编译时计算，并使用编译时计算值 4.6 初始化 z。
+
+```cpp
+constexpr int x { expr }; // Because variable x is constexpr, expr must be evaluatable at compile-time
+```
+
+The following most foundational C++ features using compile-time programming both make use of constant expressions:
+
+- Constexpr variables (discussed in upcoming lesson [5.6 -- Constexpr variables](https://www.learncpp.com/cpp-tutorial/constexpr-variables/)).
+- Constexpr functions (discussed in upcoming lesson [F.1 -- Constexpr functions](https://www.learncpp.com/cpp-tutorial/constexpr-functions/)).
+- Templates (introduced in lesson [11.6 -- Function templates](https://www.learncpp.com/cpp-tutorial/function-templates/)).
+- static_assert (discussed in lesson [9.6 -- Assert and static_assert](https://www.learncpp.com/cpp-tutorial/assert-and-static_assert/)).
+
+**constant expression**
+
+Expressions that **can** (not must) be fully evaluated at compile time, and the results remain unchanged throughout the lifetime of the program.
+
+Commonly contain:
+
+- Literals (e.g. ‘5’, ‘1.2’)
+- Most operators with constant expression operands (e.g. `3 + 4`, `2 * sizeof(int)`).
+- Const integral variables with a constant expression initializer (e.g. `const int x { 5 };`). This is a historical exception -- in modern C++, constexpr variables are preferred.
+- Constexpr variables (discussed in upcoming lesson [5.6 -- Constexpr variables](https://www.learncpp.com/cpp-tutorial/constexpr-variables/)).
+- Constexpr function calls with constant expression arguments (see [F.1 -- Constexpr functions](https://www.learncpp.com/cpp-tutorial/constexpr-functions/)).
+
+<div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        For advanced readers
+    </p>
+    <p style="margin: 1;">
+        Constant expressions can also contain:<br>
+		Constant expressions 还可以包含：
+    </p>
+    <p style="margin: 1;">
+        ● Non-type template parameters (see 11.9 -- Non-type template parameters).<br>
+        ● Enumerators (see 13.2 -- Unscoped enumerations).<br>
+        ● Type traits (see the cppreference page for type traits).<br>
+        ● Constexpr lambda expressions (see 20.6 -- Introduction to lambdas (anonymous functions)).
+    </p>
+</div>
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Tip
+    </p>
+    <p style="margin: 1;">
+        Constant expressions can not contain:<br>
+		Constant expressions 不可以包含：
+    </p>
+    <p style="margin: 1;">
+        ● Non-const variables.<br>
+        ● Const non-integral variables, even when they have a constant expression initializer (e.g. const double d { 1.2 };). To use such variables in a constant expression, define them as constexpr variables instead (see lesson 5.6 -- Constexpr variables).<br>
+        ● The return values of non-constexpr functions (even when the return expression is a constant expression).<br>
+        ● Function parameters (even when the function is constexpr).<br>
+        ● Operators with operands that are not constant expressions (e.g. x + y when x or y is not a constant expression, or std::cout << "hello\n" as std::cout is not a constant expression).<br>
+        ● Operators new, delete, throw, typeid, and operator, (comma).
+    </p>
+</div>
+
+```cpp
+#include <iostream>
+
+int getNumber()
+{
+    std::cout << "Enter a number: ";
+    int y{};
+    std::cin >> y; // can only execute at runtime
+
+    return y;      // this return expression is a runtime expression
+}
+
+// The return value of a non-constexpr function is a runtime expression
+// even when the return expression is a constant expression
+int five()
+{
+    return 5;      // this return expression is a constant expression
+}
+
+int main()
+{
+    // Literals can be used in constant expressions
+    5;                           // constant expression
+    1.2;                         // constant expression
+    "Hello world!";              // constant expression
+
+    // Most operators that have constant expression operands can be used in constant expressions
+    5 + 6;                       // constant expression
+    1.2 * 3.4;                   // constant expression
+    8 - 5.6;                     // constant expression (even though operands have different types)
+    sizeof(int) + 1;             // constant expression (sizeof can be determined at compile-time)
+
+    // The return values of non-constexpr functions can only be used in runtime expressions
+    getNumber();                 // runtime expression
+    five();                      // runtime expression (even though the return expression is a constant expression)
+
+    // Operators without constant expression operands can only be used in runtime expressions
+    std::cout << 5;              // runtime expression (std::cout isn't a constant expression operand)
+
+    return 0;
+}
+```
+
+```cpp
+// Const integral variables with a constant expression initializer can be used in constant expressions:
+const int a { 5 };           // a is usable in constant expressions
+const int b { a };           // b is usable in constant expressions (a is a constant expression per the prior statement)
+const long c { a + 2 };      // c is usable in constant expressions (operator+ has constant expression operands)
+
+// Other variables cannot be used in constant expressions (even when they have a constant expression initializer):
+int d { 5 };                 // d is not usable in constant expressions (d is non-const)
+const int e { d };           // e is not usable in constant expressions (initializer is not a constant expression)
+const double f { 1.2 };      // f is not usable in constant expressions (not a const integral variable)
+```
+
+constant expression isn't always evaluated at compile-time
+
+```cpp
+const int x { 3 + 4 }; // constant expression 3 + 4 must be evaluated at compile-time
+int y { 3 + 4 };       // constant expression 3 + 4 may be evaluated at compile-time or runtime
+```
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Tip
+    </p>
+    <p style="margin: 1;">
+        The likelihood that an expression is fully evaluated at compile-time can be categorized as follows:<br>
+		表达式在编译时被完全计算的可能性分为以下几类：
+    </p>
+    <p style="margin: 1;">
+        ● Never: A non-constant expression where the compiler is not able to determine all values at compile-time.<br>
+        ● Possibly: A non-constant expression where the compiler is able to determine all values at compile-time (optimized under the as-if rule).<br>
+        ● Likely: A constant expression used in a context that does not require a constant expression.<br>
+        ● Always: A constant expression used in a context that requires a constant expression.
+    </p>
+</div>
+
+<div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        For advanced readers
+    </p>
+    <p style="margin: 1;">
+        So why doesn’t C++ require all constant expressions to be evaluated at compile-time? There are at least two good reasons:<br>
+		那么，为什么 C++ 不要求在编译时计算所有常量表达式呢？至少有两个很好的理由：
+    </p>
+    <p style="margin: 1;">
+        1. Compile-time evaluation makes debugging harder. If our code has a buggy calculation that is evaluated at compile-time, we have limited tools to diagnose the issue. Allowing non-required constant expressions to be evaluated at runtime (typically when optimizations are turned off) enables runtime debugging of our code. Being able to step through and inspect the state of our programs while they are running can make finding bugs easier.<br>
+        编译时求值使调试更加困难。如果我们的代码有一个在编译时评估的有缺陷的计算，那么我们诊断该问题的工具有限。允许在运行时（通常在关闭优化时）计算非必需的常量表达式，可以对代码进行运行时调试。能够在程序运行时单步调试并检查程序的状态，可以更轻松地查找 bug。
+    </p>
+    <p style="margin: 1;">
+        2. To provide the compiler with the flexibility to optimize as it sees fit (or as influenced by compiler options). For example, a compiler might want to offer an option that defers all non-required constant expression evaluation to runtime, in order to improve compile times for developers.<br>
+        为编译器提供灵活性，使其能够根据需要进行优化 （或受编译器选项的影响）。例如，编译器可能希望提供一个选项，将所有非必需的常量表达式计算推迟到运行时，以便缩短开发人员的编译时间。
+    </p>
+</div>
+
+## 5.6 — Constexpr variables
+
+### Constexpr keyword
+
+Due to:
+由于：
+
+1. const 声明的变量是否可以作为常量表达式不容易判断。
+2. const 并不能让编译器知道我们需要一个变量一定可以作为常量表达式。
+3. 用 const 创建 compile-time 常量变量没有扩展到非整型变量。
+
+`constexpr` keyword is designed to specifies the value of a variable or function can appear in constant expressions.
+'constexpr' 关键字旨在指定一个变量或者函数的值可以出现在常量表达式中。
+
+| keyword     | purpose                                          | initialization                                    | evaluation time                              |
+| ----------- | ------------------------------------------------ | ------------------------------------------------- | -------------------------------------------- |
+| `const`     | an object cannot be changed after initialization | must, and may be known at compile-time or runtime | can be evaluated at runtime.                 |
+| `constexpr` | object can be used in a constant expression      | must, and must be known at compile-time.          | can be evaluated at runtime or compile-time. |
+
+Unlike `const`, `constexpr` is not part of an object’s type. Therefore a variable defined as `constexpr int` actually has type `const int`.
+不同于 `const`，`constexpr`不是对象类型的一部分，因此以`constexpr int`定义的变量实际上类型为`const int` 。
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Any constant variable whose initializer is a <b>constant expression</b> should be declared as <code>constexpr</code>.<br>
+        初始值设定项为<b>常量表达式</b>的任何常量变量都应声明为 <code>constexpr</code>。
+	</p>
+    <p style="margin: 1;">
+        Any constant variable whose initializer is <b>not a constant expression</b> (making it a runtime constant) should be declared as <code>const</code>.<br>
+        任何初始值设定项<b>不是常量表达式</b>（使其成为运行时常量）的常量变量都应声明为 <code>const</code>。
+	</p>
+</div>
+
+<div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        For advanced readers
+    </p>
+    <p style="margin: 1;">
+        In C and C++, the declaration of an array object (an object can hold multiple values) requires the length of the array (the number of values that it can hold) be known at compile-time (so the compiler can ensure the correct amount of memory is allocated for array objects).<br>
+		在 C 和 C++ 中，数组对象的声明（一个对象可以保存多个值）需要在编译时知道数组的长度（它可以保存的值的数量）（以便编译器可以确保为数组对象分配正确的内存量）。
+    </p>
+    <p style="margin: 1;">
+        In C, array length can be declared via a preprocessor macro, or via an enumerator, but not via a const variable. The C++ language standard allowed const integral types with a constant expression initializer to do that. Naturally, the constexpr integral types, which were also const integral types, were allowed too.<br>
+        在C中，数组长度可以通过预处理宏、枚举声明，而不能通过常量变量。C++则允许使用常量表达式初始化的 const 整型这么做，自然地，costexpr 整型作为一种 const 整型也可以这么做。
+    </p>
+</div>
+
+#### const and constexpr function parameters
+
+Normal function parameters:
+
+- If `const`, are treated as runtime constants because the initialization of function parameters happens at runtime;
+- if `constexpr`, cannot be compiled.
+
+| Term                  | Definition                                                   |
+| --------------------- | ------------------------------------------------------------ |
+| Compile-time constant | A value or non-modifiable object whose value must be known at compile time (e.g. literals and constexpr variables). |
+| Constexpr             | Keyword that declares objects as compile-time constants (and functions that can be evaluated at compile-time). Informally, shorthand for “constant expression”. |
+| Constant expression   | An expression that contains only compile-time constants and operators/functions that support compile-time evaluation. |
+| Runtime expression    | An expression that is not a constant expression.             |
+| Runtime constant      | A value or non-modifiable object that is not a compile-time constant. |
+
