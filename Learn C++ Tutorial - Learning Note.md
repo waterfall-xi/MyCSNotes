@@ -1773,3 +1773,143 @@ Normal function parameters:
 | Runtime expression    | An expression that is not a constant expression.             |
 | Runtime constant      | A value or non-modifiable object that is not a compile-time constant. |
 
+## 5.7 — Introduction to std::string
+
+C-style string cannot use assignment
+C-style string is danger when copy a larger one into the space allocated for a shorter one, undefined behavior will result.
+
+```cpp
+#include <string>
+
+int main()
+{
+    std::string empty {}; // empty string
+    std::string name { "Alex" }; // initialize name with string literal "Alex"
+    name = "Jay";               // change name to "Jay", and so the length is changed
+    std::cout << "My name is: " << name << '\n';
+    std::cout << '[' << empty << ']';
+
+    return 0;
+}
+```
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Key insight
+    </p>
+    <p style="margin: 1;">
+        If <code>std::string</code> doesn’t have enough memory to store a string, it will request additional memory (at runtime) using a form of memory allocation known as dynamic memory allocation. This ability to acquire additional memory is part of what makes <code>std::string</code> so flexible, but also comparatively slow.<br>
+		如果 <code>std::string</code> 没有足够的内存来存储字符串，它将使用一种称为动态内存分配的内存分配方式（在运行时）请求额外的内存。这种获取额外内存的能力是 <code>std::string</code> 如此灵活但也相对较慢的部分原因。
+    </p>
+</div>
+
+```cpp
+#include <iostream>
+#include <string>
+
+int main()
+{
+    std::cout << "Enter your full name: ";
+    std::string name{};
+    std::cin >> name; // this won't work as expected since std::cin breaks on whitespace
+
+    std::cout << "Enter your favorite color: ";
+    std::string color{};
+    std::cin >> color;
+
+    std::cout << "Your name is " << name << " and your favorite color is " << color << '\n';
+
+    return 0;
+}
+```
+
+```bash
+Enter your full name: John Doe
+Enter your favorite color: Your name is John and your favorite color is Doe
+```
+
+```cpp
+#include <iostream>
+#include <string> // For std::string and std::getline
+
+int main()
+{
+    std::cout << "Enter your full name: ";
+    std::string name{};
+    std::getline(std::cin >> std::ws, name); // read a full line of text into name
+
+    std::cout << "Enter your favorite color: ";
+    std::string color{};
+    std::getline(std::cin >> std::ws, color); // read a full line of text into color
+
+    std::cout << "Your name is " << name << " and your favorite color is " << color << '\n';
+
+    return 0;
+}
+```
+
+```
+Enter your full name: John Doe
+Enter your favorite color: blue
+Your name is John Doe and your favorite color is blue
+```
+
+### What is `std::ws`?
+
+```cpp
+#include <iostream>
+#include <string>
+
+int main()
+{
+    std::cout << "Pick 1 or 2: ";
+    int choice{};
+    std::cin >> choice;  // get "2\n", '2' to choice as 2, '\n' reserved
+
+    std::cout << "Now enter your name: ";
+    std::string name{};
+    std::getline(std::cin, name); // note: no std::ws here, just use '\n' above to name and won't wait user's input
+
+    std::cout << "Hello, " << name << ", you picked " << choice << '\n';
+
+    return 0;
+}
+```
+
+```
+Pick 1 or 2: 2
+Now enter your name: Hello, , you picked 2
+```
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        If using <code>std::getline()</code> to read strings, use <code>std::cin >> std::ws</code> input manipulator to ignore leading whitespace. This needs to be done for each <code>std::getline()</code> call, as <code>std::ws</code> is not preserved across calls.<br>
+        如果使用 <code>std：：getline()</code> 读取字符串，请使用 <code>std：：cin >>std：：ws</code> input 操纵器来忽略前导空格。这需要对每个 <code>std：：getline()</code> 调用完成，因为 <code>std：：ws</code> 不会在调用之间保留。
+	</p>
+	</p>
+</div>
+
+### `std::string.length()`
+
+```cpp
+#include <iostream>
+#include <string>
+
+int main()
+{
+    std::string name{ "Alex" };
+    std::cout << name << " has " << name.length() << " characters\n";
+    int length { static_cast<int>(name.length()) };
+
+    return 0;
+}
+```
+
+does not include the implicit null-terminator character (although `std::string` is required to be null-terminated since C++11). 不包括隐式 null 终止符字符（尽管自C++11起 `std::string` 以null结尾）。
+
+returns an unsigned integral value (most likely of type `size_t`). 返回一个无符号整型值（很可能是`size_t`）。
+
+### Initializing a** `std::string` **is expensive
