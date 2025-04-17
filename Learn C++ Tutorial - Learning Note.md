@@ -1869,6 +1869,7 @@ int main()
     std::cout << "Now enter your name: ";
     std::string name{};
     std::getline(std::cin, name); // note: no std::ws here, just use '\n' above to name and won't wait user's input
+    std::getline(std::cin >> std::ws, name); // note: added std::ws here
 
     std::cout << "Hello, " << name << ", you picked " << choice << '\n';
 
@@ -1877,8 +1878,13 @@ int main()
 ```
 
 ```
+# no std::ws
 Pick 1 or 2: 2
 Now enter your name: Hello, , you picked 2
+# have std::ws
+Pick 1 or 2: 2
+Now enter your name: Alex
+Hello, Alex, you picked 2
 ```
 
 <div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
@@ -1912,4 +1918,182 @@ does not include the implicit null-terminator character (although `std::string` 
 
 returns an unsigned integral value (most likely of type `size_t`). 返回一个无符号整型值（很可能是`size_t`）。
 
-### Initializing a** `std::string` **is expensive
+### Initializing a `std::string` is expensive
+
+Whenever a std::string is initialized, a copy of the string used to initialize it is made. Making copies of strings is expensive, so care should be taken to minimize the number of copies made.
+每当初始化 std：：string 时，都会拷贝用于初始化它的字符串。拷贝字符串的成本很高，因此应注意尽量减少复制的数量。
+
+### Do not pass `std::string` by value
+
+Same to above, function parameter must be initialized with the argument.
+同上，函数参数必须用实参初始化。
+
+### Three status can returning a `std::string`
+
+- A local variable of type `std::string`. `std：：string` 的局部变量。
+- A `std::string` that has been returned by value from another function call or operator. 已由另一个函数调用或运算符的 value 返回的 `std：：string`。
+- A `std::string` temporary that is created as part of the return statement. return 语句中创建的临时 `std：：string`。
+
+上面这些情况可能会直接在调用者的内存空间构造而不用拷贝构造，或者触发移动语义（move semantics）
+
+### `std::string` literals
+
+```cpp
+#include <iostream>
+#include <string> // for std::string
+
+int main()
+{
+    using namespace std::string_literals; // easy access to the s suffix
+
+    std::cout << "foo\n";   // no suffix is a C-style string literal
+    std::cout << "goo\n"s;  // s suffix is a std::string literal, = std::string { "goo\n", 4 }
+
+    return 0;
+}
+```
+
+### constexpr string (may not supported)
+
+```cpp
+#include <iostream>
+#include <string>
+
+int main()
+{
+    using namespace std::string_literals;
+    constexpr std::string name{ "Alex"s }; // compile error
+
+    return 0;
+}
+```
+
+## 5.8 — Introduction to std::string_view
+
+```cpp
+#include <iostream>
+#include <string>
+
+void printString(std::string str) // str makes a copy of its initializer
+{
+    std::cout << str << '\n';
+}
+
+int main()
+{
+    std::string s{ "Hello, world!" }; // s makes a copy of its initializer
+    printString(s);
+
+    return 0;
+}
+```
+
+To address the issue with `std::string` being expensive to initialize (or copy), C++17 introduced `std::string_view` (which lives in the <string_view> header). `std::string_view` provides **read-only access to an *existing* string** (a C-style string, a `std::string`, or another `std::string_view`) without making a copy.
+
+为了解决 `std::string` 初始化（或复制）成本高昂的问题，C++17 引入了 std：：`string_view`（位于<string_view>中）。`std::string_view`提供对现有字符串（C 样式字符串、`std::string` 或另一个 `std::string_view`）的只读访问，而无需制作副本。
+
+### initialization
+
+```cpp
+std::string_view s1 { "Hello, world!" }; // initialize with C-style string literal
+std::cout << s1 << '\n';
+
+std::string s{ "Hello, world!" };
+std::string_view s2 { s };  // initialize with std::string
+std::cout << s2 << '\n';
+
+std::string_view s3 { s2 }; // initialize with std::string_view
+std::cout << s3 << '\n';
+```
+
+### function parameter
+
+```cpp
+#include <iostream>
+#include <string>
+#include <string_view>
+
+void printSV(std::string_view str)
+{
+    std::cout << str << '\n';
+}
+
+int main()
+{
+    printSV("Hello, world!"); // call with C-style string literal
+
+    std::string s2{ "Hello, world!" };
+    printSV(s2); // call with std::string
+
+    std::string_view s3 { s2 };
+    printSV(s3); // call with std::string_view
+
+    return 0;
+}
+```
+
+### `std::string_view` will not implicitly convert to `std::string`
+
+```cpp
+#include <iostream>
+#include <string>
+#include <string_view>
+
+void printString(std::string str)
+{
+	std::cout << str << '\n';
+}
+
+int main()
+{
+	std::string_view sv{ "Hello, world!" };
+
+	// printString(sv);   // compile error: won't implicitly convert std::string_view to a std::string
+
+	std::string s{ sv }; // okay: we can create std::string using std::string_view initializer
+	printString(s);      // and call the function with the std::string
+
+	printString(static_cast<std::string>(sv)); // okay: we can explicitly cast a std::string_view to a std::string
+
+	return 0;
+}
+```
+
+### Assignment = changes what the `std::string_view` is viewing
+
+Assigning a new string to a `std::string_view` causes the `std::string_view` to view the new string. It does not modify the prior string being viewed in any way.
+将新字符串分配给 `std::string_view` 会导致它 view to 新字符串。它不会以任何方式修改正在查看的先前字符串。
+
+### `std::string_view` literals
+
+```cpp
+dangling viewxxxxxxxxxx 1dangling view#include <iostream>2#include <string>      // for std::string3#include <string_view> // for std::string_view45int main()6{7    using namespace std::string_literals;      // access the s suffix8    using namespace std::string_view_literals; // access the sv suffix9    std::cout << "foo\n";   // no suffix is a C-style string literal10    std::cout << "goo\n"s;  // s suffix is a std::string literal11    std::cout << "moo\n"sv; // sv suffix is a std::string_view literal1213    return 0;14}
+```
+
+### constexpr string_view (full supported)
+
+```cpp
+constexpr std::string_view s{ "Hello, world!" }; // s is a string symbolic constant
+std::cout << s << '\n'; // s will be replaced with "Hello, world!" at compile-time
+```
+
+## 5.9 — std::string_view (part 2) 
+
+**std::string_view** is a viewer
+
+While viewer (string_view) is destroyed, the viewee is not affected.
+
+While viewee is destroyed, the viewer (string_view), called a **dangling** view now, result unexpected or undefined behavior.
+
+So you should ensure the viewee's outlives the viewer (string_view).
+所以你需要确保 viewee 比 viewer (string_view) 存活更久。
+
+<div style="border: 2px solid #d89696; background-color: #ffd6d6; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Warning
+    </p>
+    <p style="margin: 1;">
+        A view is dependent on the object being viewed. If the object being viewed is modified or destroyed while the view is still being used, unexpected or undefined behavior will result.<br>
+        视图取决于正在查看的对象。如果正在查看的对象在视图仍在使用时被修改或销毁，则会导致意外或未定义的行为。
+    </p>
+</div>
