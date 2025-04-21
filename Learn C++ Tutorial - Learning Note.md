@@ -2067,7 +2067,12 @@ Assigning a new string to a `std::string_view` causes the `std::string_view` to 
 ### `std::string_view` literals
 
 ```cpp
-dangling viewxxxxxxxxxx 1dangling view#include <iostream>2#include <string>      // for std::string3#include <string_view> // for std::string_view45int main()6{7    using namespace std::string_literals;      // access the s suffix8    using namespace std::string_view_literals; // access the sv suffix9    std::cout << "foo\n";   // no suffix is a C-style string literal10    std::cout << "goo\n"s;  // s suffix is a std::string literal11    std::cout << "moo\n"sv; // sv suffix is a std::string_view literal1213    return 0;14}
+    using namespace std::string_literals;      // access the s suffix
+    using namespace std::string_view_literals; // access the sv suffix
+
+    std::cout << "foo\n";   // no suffix is a C-style string literal
+    std::cout << "goo\n"s;  // s suffix is a std::string literal
+    std::cout << "moo\n"sv; // sv suffix is a std::string_view literal
 ```
 
 ### constexpr string_view (full supported)
@@ -2097,3 +2102,161 @@ So you should ensure the viewee's outlives the viewer (string_view).
         视图取决于正在查看的对象。如果正在查看的对象在视图仍在使用时被修改或销毁，则会导致意外或未定义的行为。
     </p>
 </div>
+### `std::string_view` is best used as a read-only function parameter
+
+- no need copy
+    不需要副本
+- no risk that the string being viewed (the function argument) will be modified or destroyed
+    没有被查看的字符串实参被修改或者销毁的风险
+
+```cpp
+#include <iostream>
+#include <string>
+#include <string_view>
+
+void printSV(std::string_view str) // now a std::string_view, creates a view of the argument
+{
+    std::cout << str << '\n';
+}
+
+int main()
+{
+    printSV("Hello, world!"); // call with C-style string literal
+
+    std::string s2{ "Hello, world!" };
+    printSV(s2); // call with std::string
+
+    std::string_view s3 { s2 };
+    printSV(s3); // call with std::string_view
+
+    return 0;
+}
+```
+
+
+
+```cpp
+using namespace std::string_literals;
+using namespace std::string_view_literals; // access the sv suffix
+std::string_view name_1 { "Alex"s }; // DONOT! "Alex"s creates a temporary std::string
+std::string_view name_2 { "Alex" }; // OK "Alex"s creates a temporary std::string
+std::string_view name_3 { "Alex"sv }; // OK "Alex"s creates a temporary std::string
+```
+
+
+
+<div style="border: 2px solid #d89696; background-color: #ffd6d6; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Warning
+    </p>
+    <p style="margin: 1;">
+        Do not initialize a <code>std::string_view</code> with a <code>std::string</code> literal, as this will leave the <code>std::string_view</code> dangling.<br>
+        不要以<code>std::string</code>字面值初始化一个<code>std::string_view</code>，这会导致<code>std::string_view</code>悬挂。
+    </p>
+</div>
+
+### Be careful returning a `std::string_view`
+
+Two main safe cases:
+两个主要的安全情况
+
+1. return `std::string_view` viewed C-style string literals
+2. return `std::string_view` viewed `std::string_view` function parameter
+
+### `remove_prefix()` & `remove_suffix()`
+
+```cpp
+	std::string_view str{ "Peach" };
+	std::cout << str << '\n';
+
+	// Remove 1 character from the left side of the view
+	str.remove_prefix(1);
+	std::cout << str << '\n';
+
+	// Remove 2 characters from the right side of the view
+	str.remove_suffix(2);
+	std::cout << str << '\n';
+
+	str = "Peach"; // reset the view
+	std::cout << str << '\n';
+```
+
+once `remove_prefix()` and `remove_suffix()` have been called, the only way to reset the view is by reassigning the source string to it again.
+一旦 `remove_prefix()` 和 `remove_suffix()` 被调用，重置视图的唯一方法是再次将源字符串重新分配给它（只能 remove 而不能恢复）。
+
+Due to the `remove_suffix()`, `std::string_view` may or may not be null-terminated.
+由于 `remove_suffix()`，`std::string_view` 可能不会以 null 结尾。
+
+### A quick guide on when to use `std::string` vs `std::string_view`
+
+#### Use a `std::string` variable when:
+
+- You need a string that you can modify.
+    您需要一个可以修改的字符串。
+- You need to store user-inputted text.
+    您需要存储用户输入的文本。
+- You need to store the return value of a function that returns a `std::string`.
+    您需要存储返回 astd：：string 的函数的返回值。
+
+#### Use a `std::string_view` variable when:
+
+- You need read-only access to part or all of a string that already exists elsewhere and will not be modified or destroyed before use of the `std::string_view` is complete.
+    您需要对已存在于其他位置的字符串的部分或全部进行只读访问，并且在使用 thestd：：string_viewis 完成之前不会被修改或销毁。
+- You need a symbolic constant for a C-style string.
+    您需要 C 样式字符串的符号常量。
+- You need to continue viewing the return value of a function that returns a C-style string or a non-dangling `std::string_view`.
+    您需要继续查看返回 C 样式字符串或非 danglingstd：：string_view 的函数的返回值。
+
+#### Use a `std::string` function parameter when:
+
+- The function needs to modify the string passed in as an argument without affecting the caller. This is rare.
+    该函数需要修改作为参数传入的字符串，而不会影响调用方。这种情况很少见。
+- You are using language standard C++14 or older and aren’t comfortable using references yet.
+    您使用的是语言标准 C++14 或更早版本，并且还不习惯使用引用。
+
+#### Use a `std::string_view` function parameter when:
+
+- The function needs a read-only string.
+    该函数需要一个只读字符串。
+- The function needs to work with non-null-terminated strings.
+    该函数需要使用非以 null 结尾的字符串。
+
+#### Use a `const std::string&` function parameter when:
+
+- You are using language standard C++14 or older, and the function needs a read-only string to work with (as `std::string_view` is not available until C++17).
+- You are calling other functions that require a `const std::string`, `const std::string&`, or const C-style string (as `std::string_view` may not be null-terminated).
+
+#### Use a `std::string&` function parameter when:
+
+- You are using a `std::string` as an out-parameter (see [12.13 -- In and out parameters](https://www.learncpp.com/cpp-tutorial/in-and-out-parameters/)).
+- You are calling other functions that require a `std::string&`, or non-const C-style string.
+
+#### Use a `std::string` return type when:
+
+- The return value is a `std::string` local variable or function parameter.
+    返回值为 astd：：stringlocal 变量或函数参数。
+- The return value is a function call or operator that returns a `std::string` by value.
+    返回值是返回 astd：：stringby 值的函数调用或运算符。
+
+#### Use a `std::string_view` return type when:
+
+- The function returns a C-style string literal or local `std::string_view` that has been initialized with a C-style string literal.
+    该函数返回 C 样式字符串文本或 localstd：：string_viewthat 已使用 C 样式字符串文本初始化。
+- The function returns a `std::string_view` parameter. 该函数返回 astd：：string_viewparameter。
+
+#### Use a `std::string_view` return type when:
+
+- Writing an accessor for a `std::string_view` member.
+
+#### Use a `std::string&` return type when:
+
+- The function returns a `std::string&` parameter.
+
+#### Use a `const std::string&` return type when:
+
+- The function returns a `const std::string&` parameter.
+- Writing an accessor for a `std::string` or `const std::string` member.
+- The function returns a static (local or global) `const std::string`.
+
+# 6 Operators
+
