@@ -2260,3 +2260,92 @@ Due to the `remove_suffix()`, `std::string_view` may or may not be null-terminat
 
 # 6 Operators
 
+## 6.1 — Operator precedence and associativity
+
+### Operator precedence & associativity
+
+| Prec/Ass | Operator                                                     | Description                                                  | Pattern                                                      |
+| :------- | :----------------------------------------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
+| 1 L->R   | ::<br />::                                                   | Global scope (unary)<br />Namespace scope (binary)           | ::name<br />class_name::member_name                          |
+| 2 L->R   | ()<br />()<br />type()<br />type{}<br />[]<br />.<br />-><br />++<br />––<br />typeid<br />const_cast<br />dynamic_cast<br />reinterpret_cast<br />static_cast<br />sizeof…<br />noexcept<br />alignof | Parentheses<br />Function call<br />Functional cast<br />List init temporary object (C++11)<br />Array subscript<br />Member access from object<br />Member access from object ptr<br />Post-increment<br />Post-decrement<br />Run-time type information<br />Cast away const<br />Run-time type-checked cast<br />Cast one type to another<br />Compile-time type-checked cast<br />Get parameter pack size<br />Compile-time exception check<br />Get type alignment | (expression)<br />function_name(arguments)<br />type(expression)<br />type{expression}<br />pointer[expression]<br />object.member_name<br />object_pointer->member_name<br />lvalue++<br />lvalue––<br />typeid(type)or typeid(expression)<br />const_cast\<type\>(expression)<br /> dynamic_cast\<type\>(expression)<br /> reinterpret_cast\<type\>(expression)<br /> static_cast\<type\>(expression)<br /> sizeof…(expression)<br /> noexcept(expression)<br /> alignof(type) |
+| 3 R->L   | +<br />-<br />++<br />––<br />!<br />not<br />~<br />(type)<br />sizeof<br />co_await<br />&<br />*<br />new<br />new[]<br />delete<br />delete[] | Unary plus<br />Unary minus<br />Pre-increment<br />Pre-decrement<br />Logical NOT<br />Logical NOT<br />Bitwise NOT<br />C-style cast<br />Size in bytes<br />Await asynchronous call<br />Address of<br />Dereference<br />Dynamic memory allocation<br />Dynamic array allocation<br />Dynamic memory deletion<br />Dynamic array deletion | +expression<br />-expression<br />++lvalue<br />––lvalue<br />!expression<br />not expression<br />~expression<br />(new_type)expression<br />sizeof(type) or sizeof(expression)<br />co_await expression (C++20)<br />&lvalue<br />*expression<br />new type<br />new type[expression]<br />delete pointer<br />delete[] pointer |
+| 4 L->R   | ->*<br />.*                                                  | Member pointer selector<br />Member object selector          | object_pointer->*pointer_to_member<br />object.*pointer_to_member |
+| 5 L->R   | *<br />/<br />%                                              | Multiplication<br />Division<br />Remainder                  | expression * expression<br />expression / expression<br />expression % expression |
+| 6 L->R   | +<br />-                                                     | Addition<br />Subtraction                                    | expression + expression<br />expression - expression         |
+| 7 L->R   | <<<br />>>                                                   | Bitwise shift left / Insertion<br />Bitwise shift right / Extraction | expression << expression<br />expression >> expression       |
+| 8 L->R   | <=>                                                          | Three-way comparison (C++20)                                 | expression <=> expression                                    |
+| 9 L->R   | <<br /><=<br />><br />>=                                     | Comparison less than <br />Comparison less than or equals<br />Comparison greater than<br />Comparison greater than or equals | expression < expression<br />expression <= expression<br />expression > expression<br />expression >= expression |
+| 10 L->R  | ==<br />!=                                                   | Equality<br />Inequality                                     | expression == expression<br />expression != expression       |
+| 11 L->R  | &                                                            | Bitwise AND                                                  | expression & expression                                      |
+| 12 L->R  | ^                                                            | Bitwise XOR                                                  | expression ^ expression                                      |
+| 13 L->R  | \|                                                           | Bitwise OR                                                   | expression \| expression                                     |
+| 14 L->R  | &&<br />and                                                  | Logical AND<br />Logical AND                                 | expression && expression<br />expression and expression      |
+| 15 L->R  | \|\|<br />or                                                 | Logical OR<br />Logical OR                                   | expression \|\| expression<br />expression or expression     |
+| 16 R->L  | throw<br />co_yield<br />? :<br />=<br />*=<br />/=<br />%=<br />+=<br />-=<br /><<=<br />>>=<br />&=<br />\|=<br />^= | Throw expression<br />Yield expression (C++20)<br />Conditional<br />Assignment<br />Multiplication assignment<br />Division assignment<br />Remainder assignment<br />Addition assignment<br />Subtraction assignment<br />Bitwise shift left assignment<br />Bitwise shift right assignment<br />Bitwise AND assignment<br />Bitwise OR assignment<br />Bitwise XOR assignment | throw expression<br />co_yield expression<br />expression ? expression: expression<br />lvalue = expression<br />lvalue *= expression<br />lvalue /= expression<br /> lvalue %= expression<br /> lvalue += expression<br /> lvalue -= expression<br /> lvalue <<= expression<br /> lvalue >>= expression<br /> lvalue &= expression<br /> lvalue \|= expression<br /> lvalue ^= expression |
+| 17 L->R  | ,                                                            | Comma operator                                               | expression, expression                                       |
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Q: Where is the exponent operator?
+    </p>
+    <p style="margin: 1;">
+        C++ doesn’t include exponentiation operator. Discuss exponentiation in lesson [6.3 -- Remainder and Exponentiation](https://www.learncpp.com/cpp-tutorial/remainder-and-exponentiation/).<br>
+		C++没有幂运算的运算符，在6.3将讨论幂运算。
+    </p>
+</div>
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Use parentheses to make it clear how a non-trivial compound expression should evaluate (even if they are technically unnecessary).<br>
+        使用括号来明确组合表达式应该如何计算（即使它们在技术上是不必要的）。
+	</p>
+    <p style="margin: 1;">
+        A good rule of thumb is: Parenthesize everything, except addition, subtraction, multiplication, and division. Expressions that have a single assignment operator (and no comma operator) do not need to have the right operand of the assignment wrapped in parenthesis.<br>
+        一个好的经验法则是：将所有内容都括起来，除了加法、减法、乘法和除法。具有单个赋值运算符（且没有逗号运算符）的表达式不需要将赋值的正确作数括在括号中。
+	</p>
+</div>
+
+#### The order of evaluation of operands (including function arguments) is mostly unspecified
+
+```c++
+a * b + c * d
+# same to
+(a * b) + (c * d)
+# may (a * b) first or may (c * d) first
+```
+
+```cpp
+int getValue()
+{
+    std::cout << "Enter an integer: ";
+
+    int x{};
+    std::cin >> x;
+    return x;
+}
+
+void printCalculation(int x, int y, int z)
+{
+    std::cout << x + (y * z);
+}
+
+int main()
+{
+    printCalculation(getValue(), getValue(), getValue()); // this line is ambiguous
+
+    return 0;
+}
+```
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Tip
+    </p>
+    <p style="margin: 1;">
+        The Clang compiler evaluates arguments in left-to-right order. The GCC compiler evaluates arguments in right-to-left order.<br>
+		Clang 编译器按从左到右的顺序计算参数。GCC 编译器按从右到左的顺序计算参数。
+    </p>
+</div>
