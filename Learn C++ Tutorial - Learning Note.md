@@ -2204,6 +2204,8 @@ Due to the `remove_suffix()`, `std::string_view` may or may not be null-terminat
     您需要对已存在于其他位置的字符串的部分或全部进行只读访问，并且在使用 thestd：：string_viewis 完成之前不会被修改或销毁。
 - You need a symbolic constant for a C-style string.
     您需要 C 样式字符串的符号常量。
+- In the vast majority of cases, integer exponentiation will overflow the integral type. This is likely why such a function wasn’t included in the standard library in the first place.
+    在绝大多数情况下，整数幂运算会使整型溢出。这可能就是为什么 standard 库中最初没有包含这样的函数的原因。
 - You need to continue viewing the return value of a function that returns a C-style string or a non-dangling `std::string_view`.
     您需要继续查看返回 C 样式字符串或非 danglingstd：：string_view 的函数的返回值。
 
@@ -2349,3 +2351,209 @@ int main()
 		Clang 编译器按从左到右的顺序计算参数。GCC 编译器按从右到左的顺序计算参数。
     </p>
 </div>
+## 6.2 — Arithmetic operators
+
+### Integer and floating point division 整数和浮点除法
+
+If either (or both) of the operands are floating, `%` performs floating point division that returns a floating point value. 如果其中一个（或两个）操作数是浮点值，则 `%` 将执行浮点除法返回浮点值。
+
+If both of the operands are integers, `%` performs integer division instead. It drops any fractions (rounded down while it is greater than 0, rounded up while it is less than 0) and returns an integer value. 如果两个操作数都是整数，则 `%` 将改为执行整数除法。会丢弃任何分数（大于0时候向下取整，小于0时候向上取整）并返回一个整数值。
+
+#### Using static_cast<> to do floating point division with integers
+
+```c++
+constexpr int x{ 7 };
+constexpr int y{ 4 };
+
+std::cout << "int / int = " << x / y << '\n';
+std::cout << "double / int = " << static_cast<double>(x) / y << '\n';
+std::cout << "int / double = " << x / static_cast<double>(y) << '\n';
+std::cout << "double / double = " << static_cast<double>(x) / static_cast<double>(y) << '\n';
+```
+
+```
+int / int = 1
+double / int = 1.75
+int / double = 1.75
+double / double = 1.75
+```
+
+### Dividing by 0 and 0.0
+
+1. Dividing by 0: undefined behavior
+2. Dividing by 0.0: `NaN`,`Inf`, or undefined behavior
+
+## 6.3 — Remainder and Exponentiation
+
+### The remainder operator (**`operator%`**)
+
+```c++
+if ((x % y) == 0)
+    // x is evenly divisible by y
+```
+
+#### Remainder with negative numbers
+
+`x % y` always returns results with the sign of *x*.
+
+#### write a function that returns whether a number is odd
+
+```cpp
+bool isOdd(int x)
+{
+    return (x % 2) == 1; // fails when x is -5
+}
+```
+
+Above can't work when x is negative.
+
+```cpp
+bool isOdd(int x)
+{
+    return (x % 2) != 0; // could also write return (x % 2)
+}
+```
+
+### Exponents in C++
+
+```c++
+#include <cmath>
+
+double x{ std::pow(3.0, 4.0) }; // 3 to the 4th power
+```
+
+```c++
+float       pow ( float base, float exp );
+double      pow ( double base, double exp );
+float       pow ( float base, int exp );
+double      pow ( double base, int exp );
+```
+
+Note that `pow()` must return floating type. 注意 `pow()` 一定会返回浮点类型
+
+If you want to do integer exponentiation, you’re best off using your own function to do so. 如果想要整型幂运算，最好自己实现
+
+```cpp
+#include <cassert> // for assert
+#include <cstdint> // for std::int64_t
+#include <iostream>
+
+// note: exp must be non-negative
+// note: does not perform range/overflow checking, use with caution
+constexpr std::int64_t powint(std::int64_t base, int exp)
+{
+	assert(exp >= 0 && "powint: exp parameter has negative value");
+
+	// Handle 0 case
+	if (base == 0)
+		return (exp == 0) ? 1 : 0;
+
+	std::int64_t result{ 1 };
+	while (exp > 0)
+	{
+		if (exp & 1)  // if exp is odd
+			result *= base;
+		exp /= 2;
+		base *= base;
+	}
+
+	return result;
+}
+
+int main()
+{
+	std::cout << powint(7, 12) << '\n'; // 7 to the 12th power
+
+	return 0;
+}
+```
+
+<div style="border: 2px solid #d89696; background-color: #ffd6d6; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Warning
+    </p>
+    <p style="margin: 1;">
+        In the vast majority of cases, integer exponentiation will overflow the integral type. This is likely why such a function wasn’t included in the standard library in the first place.<br>
+        在绝大多数情况下，整数幂运算会使整型溢出。这可能就是为什么标准库中最初没有包含这样的函数的原因。
+    </p>
+</div>
+
+A safer version that checks for overflow:
+一个会检查溢出的更安全版本：
+
+```cpp
+#include <cassert> // for assert
+#include <cstdint> // for std::int64_t
+#include <iostream>
+#include <limits> // for std::numeric_limits
+
+// A safer (but slower) version of powint() that checks for overflow
+// note: exp must be non-negative
+// Returns std::numeric_limits<std::int64_t>::max() if overflow occurs
+constexpr std::int64_t powint_safe(std::int64_t base, int exp)
+{
+    assert(exp >= 0 && "powint_safe: exp parameter has negative value");
+
+    // Handle 0 case
+    if (base == 0)
+        return (exp == 0) ? 1 : 0;
+
+    std::int64_t result { 1 };
+
+    // To make the range checks easier, we'll ensure base is positive
+    // We'll flip the result at the end if needed
+    bool negativeResult{ false };
+
+    if (base < 0)
+    {
+        base = -base;
+        negativeResult = (exp & 1);
+    }
+
+    while (exp > 0)
+    {
+        if (exp & 1) // if exp is odd
+        {
+            // Check if result will overflow when multiplied by base
+            if (result > std::numeric_limits<std::int64_t>::max() / base)
+            {
+                std::cerr << "powint_safe(): result overflowed\n";
+                return std::numeric_limits<std::int64_t>::max();
+            }
+
+            result *= base;
+        }
+
+        exp /= 2;
+
+        // If we're done, get out here
+        if (exp <= 0)
+            break;
+
+        // The following only needs to execute if we're going to iterate again
+
+        // Check if base will overflow when multiplied by base
+        if (base > std::numeric_limits<std::int64_t>::max() / base)
+        {
+            std::cerr << "powint_safe(): base overflowed\n";
+            return std::numeric_limits<std::int64_t>::max();
+        }
+
+        base *= base;
+    }
+
+    if (negativeResult)
+        return -result;
+
+    return result;
+}
+
+int main()
+{
+	std::cout << powint_safe(7, 12) << '\n'; // 7 to the 12th power
+	std::cout << powint_safe(70, 12) << '\n'; // 70 to the 12th power (will return the max 64-bit int value)
+
+	return 0;
+}
+```
+

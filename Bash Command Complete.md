@@ -105,7 +105,7 @@ uesrname@hostname:~/Documents$
 
 `~`: Home directory;
 
-`/`: root directory (type all alone);
+`/`: Root directory (type all alone);
 
 
 
@@ -118,7 +118,29 @@ sudo chown $USER:$USER .
 sudo chown xiongyw:xiongyw .
 ```
 
+## rename
 
+```bash
+rename [选项] 's/原字符串/新字符串/[修饰符]' 文件名匹配模式
+# 替换 old 为 new
+rename 's/old/new/' *old*
+# 添加前缀
+rename 's/^/prefix_/' *.jpg
+# 添加后缀
+rename 's/$/_backup/' *.log
+# -n 或 --nothink: 模拟运行（显示将要重命名的文件，但不实际执行）
+rename -n 's/pattern/replacement/' *.files
+# -f 或 --force: 强制覆盖已存在的文件
+rename -f 's/pattern/replacement/' *.files
+# 对.png进行rename
+rename 's/pattern/replacement/' *.png
+# 对任意文件名进行rename
+rename 's/pattern/replacement/' *
+```
+
+
+
+## Others
 
 ### Ctrl + C 终止续行模式（左侧出现续行提示符）
 
