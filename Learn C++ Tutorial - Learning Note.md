@@ -2166,19 +2166,7 @@ Two main safe cases:
 ### `remove_prefix()` & `remove_suffix()`
 
 ```cpp
-	std::string_view str{ "Peach" };
-	std::cout << str << '\n';
-
-	// Remove 1 character from the left side of the view
-	str.remove_prefix(1);
-	std::cout << str << '\n';
-
-	// Remove 2 characters from the right side of the view
-	str.remove_suffix(2);
-	std::cout << str << '\n';
-
-	str = "Peach"; // reset the view
-	std::cout << str << '\n';
+	std::string_view str{ "Peach" };	std::cout << str << '\n';	// Remove 1 character from the left side of the view	str.remove_prefix(1);	std::cout << str << '\n';	// Remove 2 characters from the right side of the view	str.remove_suffix(2);	std::cout << str << '\n';	str = "Peach"; // reset the view	std::cout << str << '\n';i
 ```
 
 once `remove_prefix()` and `remove_suffix()` have been called, the only way to reset the view is by reassigning the source string to it again.
@@ -2463,7 +2451,7 @@ constexpr std::int64_t powint(std::int64_t base, int exp)
 int main()
 {
 	std::cout << powint(7, 12) << '\n'; // 7 to the 12th power
-
+i
 	return 0;
 }
 ```
@@ -2557,3 +2545,116 @@ int main()
 }
 ```
 
+## 6.4 — Increment/decrement operators, and side effects
+
+| Operator                                    | Symbol | Form | Operation                                                    |
+| :------------------------------------------ | :----- | :--- | :----------------------------------------------------------- |
+| Prefix increment (pre-increment) 前缀递增   | ++     | ++x  | Increment x, then return x 递增 x，然后返回 x                |
+| Prefix decrement (pre-decrement) 前缀递减   | ––     | ––x  | Decrement x, then return x 递减 x，然后返回 x                |
+| Postfix increment (post-increment) 后缀递增 | ++     | x++  | Copy x, then increment x, then return the copy<br />复制 x，然后递增 x，然后返回副本 |
+| Postfix decrement (post-decrement) 后缀递减 | ––     | x––  | Copy x, then decrement x, then return the copy<br />复制 x，然后递减 x，然后返回副本 |
+
+Note that the postfix version takes a lot more steps, and thus may not be as performant as the prefix version.
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Favor the prefix versions, as they are more performant and less likely to cause surprises. e.g. <code>for(int i = 0; i <10; ++i)</code> is preferred over <code>for(int i = 0; i <10; ++i)</code>.<br>
+        首选前缀版本，因为它们的性能更高，不太可能引起意外。例如，<code>for(int i = 0; i <10; ++i)</code> 相比 <code>for(int i = 0; i <10; ++i)</code>来说更好。
+	</p>
+</div>
+
+**Side effects can cause order of evaluation issues**
+
+```cpp
+#include <iostream>
+
+int add(int x, int y)
+{
+    return x + y;
+}
+
+int main()
+{
+    int x { 5 };
+    int value{ add(x, ++x) }; // undefined behavior: is this 5 + 6, or 6 + 6?
+    // It depends on what order your compiler evaluates the function arguments in
+    std::cout << value << '\n'; // value could be 11 or 12, depending on how the above line evaluates!
+    return 0;
+}
+```
+
+## 6.5 — The comma operator
+
+| Operator | Symbol | Form | Operation                             |
+| :------- | :----- | :--- | :------------------------------------ |
+| Comma    | ,      | x, y | Evaluate x then y, returns value of y |
+
+Note that comma has the lowest precedence of all the operators, even lower than assignment. Because of this, the following two lines of code do different things:
+
+```cpp
+z = (a, b); // evaluate (a, b) first to get result of b, then assign that value to variable z.
+z = a, b; // evaluates as "(z = a), b", so z gets assigned the value of a, and b is evaluated and discarded.
+```
+
+## 6.6 — The conditional operator
+
+| Operator    | Symbol | Form      | Meaning                                                      |
+| :---------- | :----- | :-------- | :----------------------------------------------------------- |
+| Conditional | ?:     | c ? x : y | If conditional `c` is `true` then evaluate `x`, otherwise evaluate `y` |
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Parenthesize the entire conditional operation (including operands) when used in a compound expression.<br>
+        在复合表达式中使用时，将整个条件运算（包括操作数）括起来。。
+	</p>
+    <p style="margin: 1;">
+        For readability, consider parenthesizing the condition if it contains any operators (other than the function call operator).<br>
+        为了提高可读性，如果条件包含任何运算符（函数调用运算符除外），请考虑将条件括起来。
+	</p>
+</div>
+
+**The type of the expressions must match or be convertible**
+
+```cpp
+std::cout << (true ? 1 : 2) << '\n';    // okay: both operands have matching type int
+std::cout << (false ? 1 : 2.2) << '\n'; // okay: int value 1 converted to double
+std::cout << (true ? -1 : 2u) << '\n';  // surprising result: -1 converted to unsigned int, result out of range
+/*
+1
+2.2
+4294967295
+*/
+```
+
+## 6.7 — Relational operators and floating point comparisons
+
+| Operator               | Symbol | Form   | Operation                                                |
+| :--------------------- | :----- | :----- | :------------------------------------------------------- |
+| Greater than           | >      | x > y  | true if x is greater than y, false otherwise             |
+| Less than              | <      | x < y  | true if x is less than y, false otherwise                |
+| Greater than or equals | >=     | x >= y | true if x is greater than or equal to y, false otherwise |
+| Less than or equals    | <=     | x <= y | true if x is less than or equal to y, false otherwise    |
+| Equality               | ==     | x == y | true if x equals y, false otherwise                      |
+| Inequality             | !=     | x != y | true if x does not equal y, false otherwise              |
+
+### Comparison of calculated floating point values can be problematic
+
+```cpp
+constexpr double d1{ 100.0 - 99.99 }; // should equal 0.01 mathematically
+constexpr double d2{ 10.0 - 9.99 }; // should equal 0.01 mathematically
+
+if (d1 == d2)
+    std::cout << "d1 == d2" << '\n';
+else if (d1 > d2)
+    std::cout << "d1 > d2" << '\n'; // actually d1 = 0.010000000000005116 and d2 = 0.0099999999999997868
+else if (d1 < d2)
+    std::cout << "d1 < d2" << '\n';
+```
+
+Due to the floating point values are not precise, comparing floating point values using any of the relational operators can be dangerous!
