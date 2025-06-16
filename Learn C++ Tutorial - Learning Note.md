@@ -2658,3 +2658,87 @@ else if (d1 < d2)
 ```
 
 Due to the floating point values are not precise, comparing floating point values using any of the relational operators can be dangerous!
+由于浮点值是不精确的，用任何关系操作符比较浮点值都可能是危险的！
+
+### Floating point equality and inequality
+
+The equality operators  (== and !=) is the most dangerous operators in the relational operators between two floating point value.
+相等操作符（==和!=）是两个浮点值之间的关系操作符中最危险的操作符。
+
+<div style="border: 2px solid #d89696; background-color: #ffd6d6; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Warning
+    </p>
+    <p style="margin: 1;">
+        Avoid using operator== and operator!= to compare floating point values if there is any chance those values have been calculated.<br>
+        避免使用 == 和 != 来比较浮点值（如果有可能已计算这些值）。
+    </p>
+</div>
+
+One exception case to the above: It is safe to compare a floating point literal with a variable of the same type that has been initialized with a literal of the same type, so long as the number of significant digits in each literal does not exceed the minimum precision for that type. Float has a minimum precision of 6 significant digits, and double has a minimum precision of 15 significant digits.
+一个例外情况：将浮点 Literals 与已使用相同类型的 Literal 初始化的相同类型的变量进行比较是安全的，只要每个 Literals 中的有效位数不超过该类型的最小精度。Float 的最小精度为 6 位有效数字，double 的最小精度为 15 位有效数字。
+
+It is mostly not safe to compare floating point literals of different types. For example, comparing `9.8f` to `9.8` will return false.
+比较不同类型的浮点 Literals 通常是不安全的。例如，比较`9.8f`和`9.8`将返回 false。
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Tip
+    </p>
+    <p style="margin: 1;">
+        One exception case to the above: It is safe to compare a floating point literal with a variable of the same type that has been initialized with a literal of the same type, so long as the number of significant digits in each literal does not exceed the minimum precision for that type. Float has a minimum precision of 6 significant digits, and double has a minimum precision of 15 significant digits.<br>
+		一个例外情况：将浮点 Literals 与已使用相同类型的 Literal 初始化的相同类型的变量进行比较是安全的，只要每个 Literals 中的有效位数不超过该类型的最小精度。Float 的最小精度为 6 位有效数字，double 的最小精度为 15 位有效数字。
+    </p>
+    <p style="margin: 1;">
+        It is mostly not safe to compare floating point literals of different types. For example, comparing <code>9.8f</code> to <code>9.8</code> will return false.<br>
+		比较不同类型的浮点 Literals 通常是不安全的。例如，比较<code>9.8f</code>和<code>9.8</code>将返回 false。
+    </p>
+</div>
+
+### Comparing floating point numbers (advanced / optional reading)
+
+A inconvenient solution:
+
+```cpp
+#include <cmath> // for std::abs()
+
+// absEpsilon is an absolute value
+bool approximatelyEqualAbs(double a, double b, double absEpsilon)
+{
+    // if the distance between a and b is less than or equal to absEpsilon, then a and b are "close enough"
+    return std::abs(a - b) <= absEpsilon;
+}
+```
+
+[Donald Knuth](https://en.wikipedia.org/wiki/Donald_Knuth), a famous computer scientist, suggested the following method in his book “The Art of Computer Programming, Volume II: Seminumerical Algorithms (Addison-Wesley, 1969)”:
+[Donald Knuth](https://en.wikipedia.org/wiki/Donald_Knuth)著名计算机科学家在他的著作《计算机编程的艺术，第二卷：半数值算法》（Addison-Wesley，1969 年）中提出了以下方法：
+
+```cpp
+#include <algorithm> // for std::max
+#include <cmath>     // for std::abs
+
+// Return true if the difference between a and b is within epsilon percent of the larger of a and b
+bool approximatelyEqualRel(double a, double b, double relEpsilon)
+{
+	return (std::abs(a - b) <= (std::max(std::abs(a), std::abs(b)) * relEpsilon));
+}
+```
+
+But `approximatelyEqualRel()` will be invalidated while the input floating point value are mathematical zero.
+但是当两个浮点值输入是数学上的0时，`approximatelyEqualRel()`会失效。
+
+A compositive solution:
+
+```cpp
+// Return true if the difference between a and b is less than or equal to absEpsilon, or within relEpsilon percent of the larger of a and b
+bool approximatelyEqualAbsRel(double a, double b, double absEpsilon, double relEpsilon)
+{
+    // Check if the numbers are really close -- needed when comparing numbers near zero.
+    if (std::abs(a - b) <= absEpsilon)
+        return true;
+    // Otherwise fall back to Knuth's algorithm
+    return approximatelyEqualRel(a, b, relEpsilon);
+}
+```
+
+## 6.8 — Logical operators
