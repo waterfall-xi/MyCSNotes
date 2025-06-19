@@ -2465,7 +2465,6 @@ i
         在绝大多数情况下，整数幂运算会使整型溢出。这可能就是为什么标准库中最初没有包含这样的函数的原因。
     </p>
 </div>
-
 A safer version that checks for overflow:
 一个会检查溢出的更安全版本：
 
@@ -2742,3 +2741,249 @@ bool approximatelyEqualAbsRel(double a, double b, double absEpsilon, double relE
 ```
 
 ## 6.8 — Logical operators
+
+| Operator    | Symbol | Example Usage | Operation                                                    |
+| :---------- | :----- | :------------ | :----------------------------------------------------------- |
+| Logical NOT | !      | !x            | true if x is false, or false if x is true<br />如果 x 为 false，则为 true，如果 x 为 true，则为 false。 |
+| Logical AND | &&     | x && y        | true if x and y are both true, false otherwise<br />如果 x 和 y 都为 true，则为 true，否则为 false |
+| Logical OR  | \|\|   | x \|\| y      | true if either (or both) x or y are true, false otherwise<br />如果 x 和 y 都为 true，则为 true，否则为 false |
+
+**Short circuit evaluation**
+
+```cpp
+x == 1 && y == 2
+z == 1 || z == 2
+```
+
+If `x==1` is false, the expression must return false. Then `y == 2` won't be evaluated for optimization purposes.
+如果`x==1`为false表达式结果一定是false，于是`y == 2`不会被计算以优化效率。
+
+Similarly, if `z == 1`, the `z == 2` won't be evaluated.
+同样地，如果`z == 1`为真，`z == 2` 不会被计算。
+
+<div style="border: 2px solid #d89696; background-color: #ffd6d6; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Warning
+    </p>
+    <p style="margin: 1;">
+        Short circuit evaluation may cause Logical OR and Logical AND to not evaluate the right operand. Avoid using expressions with side effects in conjunction with these operators.<br>
+        短路计算可能会导致 Logical ORandLogical AND 不计算正确的作数。避免将具有副作用的表达式与这些运算符结合使用。
+    </p>
+</div>
+
+<div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        For advanced readers
+    </p>
+    <p style="margin: 1;">
+    Only the built-in versions of these operators perform short-circuit evaluation. If you overload these operators to make them work with your own types, those overloaded operators will not perform short-circuit evaluation.<br>
+    只有这些运算符的内置版本才会执行短路计算。如果重载这些运算符以使它们与您自己的类型一起使用，则这些重载运算符将不会执行短路计算。
+    </p>
+</div>
+
+### Mixing ANDs and ORs
+
+*logical AND* has higher precedence than *logical OR* !
+逻辑AND比逻辑OR的优先级更高！
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Explicitly parenthesizing When mixing logical AND and logical OR in a single expression!<br>
+        在复合表达式中使用时，将整个条件运算（包括操作数）括起来。。
+	</p>
+</div>
+
+**De Morgan’s laws**
+
+`!(x && y)` is equivalent to `!x || !y`
+
+| x     | y     | !x    | !y    | !(x && y) | !x \|\| !y |
+| :---- | :---- | :---- | :---- | :-------- | :--------- |
+| false | false | true  | true  | true      | true       |
+| false | true  | true  | false | true      | true       |
+| true  | false | false | true  | true      | true       |
+| true  | true  | false | false | false     | false      |
+
+`!(x || y)` is equivalent to `!x && !y`
+
+| x     | y     | !x    | !y    | !(x \|\| y) | !x && !y |
+| :---- | :---- | :---- | :---- | :---------- | :------- |
+| false | false | true  | true  | true        | true     |
+| false | true  | true  | false | false       | false    |
+| true  | false | false | true  | false       | false    |
+| true  | true  | false | false | false       | false    |
+
+### No logical exclusive or (XOR) but `!=`
+
+| Left operand | Right operand | logical XOR | operator!= |
+| :----------- | :------------ | :---------- | :--------- |
+| false        | false         | false       | false      |
+| false        | true          | true        | true       |
+| true         | false         | true        | true       |
+| true         | true          | false       | false      |
+
+# 7 Scope, Duration, and Linkage
+
+## 7.1 — Compound statements (blocks)
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Keep the nesting level of your functions to 3 or less. If your function has a need for more nested levels, consider refactoring your function into sub-functions.<br>
+        将函数的嵌套级别保持为 3 或更低。如果您的函数需要更多嵌套级别，请考虑将函数重构为子函数。
+	</p>
+</div>
+
+## 7.2 — User-defined namespaces and the scope resolution operator
+
+```cpp
+// main.cpp
+#include "foo.h"
+#include "goo.h"
+
+int main()
+{
+    int x{doSomething(1, 2)};
+    return 0;
+}
+```
+
+```cpp
+// foo.h
+#ifndef FOO_H
+#define FOO_H
+int doSomething(int x, int y);
+#endif
+```
+
+```cpp
+// foo.cpp
+#include "foo.h"
+
+int doSomething(int x, int y)
+{
+    return x + y;
+}
+```
+
+```cpp
+// goo.h
+#ifndef GOO_H
+#define GOO_H
+int doSomething(int x, int y);
+#endif
+```
+
+```cpp
+// goo.cpp
+#include "goo.h"
+
+int doSomething(int x, int y)
+{
+    return x - y;
+}
+```
+
+Get a linker error:
+得到链接错误：
+
+```
+goo.cpp:3: multiple definition of `doSomething(int, int)'; foo.cpp:3: first defined here
+```
+
+Using **user-defined namespaces** / **program-defined namespaces** to fix that:
+使用 **user-defined namespaces** / **program-defined namespaces** 来修改：
+
+```cpp
+// main.cpp
+#include "foo.h"
+#include "goo.h"
+
+int main()
+{
+    int x{Foo::doSomething(1, 2)};
+    int y{Goo::doSomething(1, 2)};
+    return 0;
+}
+```
+
+```cpp
+// foo.h
+#ifndef FOO_H
+#define FOO_H
+namespace Foo {
+    int doSomething(int x, int y);
+}
+#endif
+```
+
+```cpp
+// foo.cpp
+#include "foo.h"
+
+namespace Foo // define a namespace named Foo
+{
+    int doSomething(int x, int y)
+    {
+        return x + y;
+    }
+}
+```
+
+```cpp
+// goo.h
+#ifndef GOO_H
+#define GOO_H
+namespace Goo {
+    int doSomething(int x, int y);
+}
+#endif
+```
+
+```cpp
+// goo.cpp
+#include "goo.h"
+
+namespace Goo // define a namespace named Foo
+{
+    int doSomething(int x, int y)
+    {
+        return x - y;
+    }
+}
+```
+
+Prefer namespace names starting with a capital letter
+首选用大写字母开头为命名空间名称命名
+
+**Using the scope resolution operator with no name prefix**
+
+```cpp
+#include <iostream>
+
+void print() // this print() lives in the global namespace
+{
+	std::cout << " there\n";
+}
+
+namespace Foo
+{
+	void print() // this print() lives in the Foo namespace
+	{
+		std::cout << "Hello";
+	}
+}
+
+int main()
+{
+	Foo::print(); // call print() in Foo namespace
+	::print();    // call print() in global namespace (same as just calling print() in this case)
+	return 0;
+}
+```
+
