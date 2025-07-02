@@ -16,6 +16,7 @@ Becoming an expert won’t happen overnight, but with a bit of patience, you’l
         Although C++ is technically considered a high-level language, newer programming languages (e.g. scripting languages) provide an even higher level of abstraction. As such, C++ is sometimes inaccurately called a “low-level language” in comparison.
     </p>
 </div>
+
 <div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px;">
     <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
         Author’s note
@@ -33,6 +34,7 @@ Becoming an expert won’t happen overnight, but with a bit of patience, you’l
         Rules are instructions that you <i>must</i> do, as required by the language. Failure to abide by a rule will generally result in your program not working.
     </p>
 </div>
+
 <div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
     <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
         Best practice
@@ -1284,12 +1286,13 @@ A better method is to tell your compiler or IDE that you have a bunch of header 
 	为了最大限度地提高编译器标记缺少的 include 的几率，请按如下方式对 #includes 进行排序（跳过任何不相关的内容）：
 	</p>
     <p style="margin: 1;">
-    ● The paired header file for this code file (e.g. add.cpp should #include "add.h")<br>
-	● Other headers from the same project (e.g. #include "mymath.h")<br>
-	● 3rd party library headers (e.g. #include <boost/tuple/tuple.hpp>)<br>
-	● Standard library headers (e.g. #include <iostream>)
+        ● The paired header file for this code file (e.g. add.cpp should <code>#include "add.h"</code>)<br>
+        ● Other headers from the same project (e.g. <code>#include "mymath.h"</code>)<br>
+        ● 3rd party library headers (e.g. <code>#include &lt;boost/tuple/tuple.hpp&gt;</code>)<br>
+        ● Standard library headers (e.g. <code>#include &lt;iostream&gt;</code>)
 	</p>
 </div>
+
 
 ## 2.12 — Header guards
 
@@ -2963,6 +2966,10 @@ Prefer namespace names starting with a capital letter
 
 **Using the scope resolution operator with no name prefix**
 
+`UserNameSpace::doSomething` vs `::doSomething`
+
+`::doSomething`=>`globalNamespace::doSomething`
+
 ```cpp
 #include <iostream>
 
@@ -2987,3 +2994,123 @@ int main()
 }
 ```
 
+**Identifier resolution from within a namespace**
+
+`doSomething` vs `::doSomething`
+
+`doSomething`=>`currentNamespcae::doSomething` no found =>`previousNamespcae::doSomething`=>`globalNamespace::doSomething`
+
+```cpp
+#include <iostream>
+
+void print() // this print() lives in the global namespace
+{
+	std::cout << " there\n";
+}
+
+namespace Foo
+{
+	void print() // this print() lives in the Foo namespace
+	{
+		std::cout << "Hello";
+	}
+	void printHelloThere()
+	{
+		print();   // calls print() in Foo namespace
+		::print(); // calls print() in global namespace
+	}
+}
+
+int main()
+{
+	Foo::printHelloThere();
+	return 0;
+}
+```
+
+**Multiple namespace blocks in multiple locations are allowed**
+**在多个位置的多个命名空间块是合法的**
+
+### How to use namespaces
+
+1. Any code that will be distributed should definitely be namespaced.
+    任何将被分发的代码应该被空间命名
+
+2. In multi-team organizations, two-level or even three-level namespaces
+    在多团队组织中，二级甚至三级命名空间
+
+- Project or library :: module (e.g. `Foologger::Lang`)
+- Company or org :: project or library (e.g. `Foosoft::Foologger`)
+- Company or org :: project or library :: module (e.g. `Foosoft::Foologger::Lang`)
+
+## 7.3 — Local variables
+
+**Local variables have block scope**
+
+From their point of definition to the end of the block
+
+**All variable names within a scope must be unique**
+
+**Local variables have automatic storage duration**
+
+Local variables are automatically created at the point of definition and automatically destroyed at the end of the block
+
+**Local variables have no linkage**
+
+An identifier’s **linkage** determines whether a declaration of that same identifier in a different scope refers to the same object (or function).
+标识符的**linkage**属性确定不同范围内相同标识符的声明是否引用同一对象（或函数）。
+
+```cpp
+    int x { 2 }; // local variable, no linkage
+    {
+        int x { 3 }; // this declaration of x refers to a different object than the previous x
+    }
+```
+
+## 7.4 — Introduction to global variables
+
+### Declaring global variables and its scope
+
+```cpp
+#include <iostream>
+
+// Variables declared outside of a function are global variables
+int g_x {}; // global variable g_x
+
+void doSomething()
+{
+    // ...
+}
+
+int main()
+{
+    //...
+    return 0;
+}
+// g_x goes out of scope here
+```
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Prefer defining global variables inside a namespace rather than in the global namespace.<br>
+        首选在命名空间内定义全局变量，而不是在全局命名空间中。
+	</p>
+</div>
+
+**Global variables have static duration**
+
+Global variables are created when the program starts (before `main()` begins execution), and destroyed when it ends. This is called **static duration**. Variables with *static duration* are sometimes called **static variables**.
+全局变量在程序启动时创建 （`main()`开始执行之前），并在程序结束时销毁。这称为静态持续时间。具有静态持续时间的变量有时称为静态变量。
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Consider using a “g” or “g_” prefix when naming global variables (especially those defined in the global namespace).<br>
+        在命名全局变量（尤其是在全局命名空间中定义的变量）时，请考虑使用“g”或“g_”前缀。
+	</p>
+</div>
