@@ -6,6 +6,11 @@ LearnCpp.com is a free website devoted to teaching you how to program in modern 
 
 Becoming an expert won’t happen overnight, but with a bit of patience, you’ll get there. And LearnCpp.com will show you the way.
 
+**My comment account**
+
+Waterfall
+waterfall19991115@gmail.com
+
 # 0 Introduction / Getting Started
 
 <div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px">
@@ -3045,17 +3050,17 @@ int main()
 
 ## 7.3 — Local variables
 
-**Local variables have block scope**
+**1. Local variables have block scope**
 
 From their point of definition to the end of the block
 
-**All variable names within a scope must be unique**
+**2. All variable names within a scope must be unique**
 
-**Local variables have automatic storage duration**
+**3. Local variables have automatic storage duration**
 
 Local variables are automatically created at the point of definition and automatically destroyed at the end of the block
 
-**Local variables have no linkage**
+**4. Local variables have no linkage**
 
 An identifier’s **linkage** determines whether a declaration of that same identifier in a different scope refers to the same object (or function).
 标识符的**linkage**属性确定不同范围内相同标识符的声明是否引用同一对象（或函数）。
@@ -3114,3 +3119,690 @@ Global variables are created when the program starts (before `main()` begins exe
         在命名全局变量（尤其是在全局命名空间中定义的变量）时，请考虑使用“g”或“g_”前缀。
 	</p>
 </div>
+## 7.5 — Variable shadowing (name hiding)
+
+```cpp
+int main()
+{ // outer block
+    int apples { 5 }; // here's the outer block apples
+    { // nested block
+        // apples refers to outer block apples here
+        std::cout << apples << '\n'; // print value of outer block apples
+
+        int apples{ 0 }; // define apples in the scope of the nested block
+
+        // apples now refers to the nested block apples
+        // the outer block apples is temporarily hidden
+
+        apples = 10; // this assigns value 10 to nested block apples, not outer block apples
+
+        std::cout << apples << '\n'; // print value of nested block apples
+    } // nested block apples destroyed
+    std::cout << apples << '\n'; // prints value of outer block apples
+    return 0;
+} // outer block apples destroyed
+```
+
+```bash
+5
+10
+5
+```
+
+```cpp
+int value { 5 }; // global variable
+
+void foo()
+{
+    std::cout << "global variable value: " << value << '\n'; // value is not shadowed here, so this refers to the global value
+}
+
+int main()
+{
+    int value { 7 }; // hides the global variable value (wherever local variable value is in scope)
+    ++value; // increments local value, not global value
+    std::cout << "local variable value: " << value << '\n';
+    foo();
+    return 0;
+} // local value is destroyed
+```
+
+```
+local variable value: 8
+global variable value: 5
+```
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Avoid variable shadowing.<br>
+        避免变量阴影。
+	</p>
+</div>
+## 7.6 — Internal linkage
+
+An identifier with **internal linkage** can be seen and used within a single translation unit, but it is not accessible from other translation units. This means that if two source files have identically named identifiers with internal linkage, those identifiers will be treated as independent (and do not result in an ODR violation for having duplicate definitions).
+具有内部链接的标识符可以在单个翻译单元中查看和使用，但无法从其他翻译单元访问。这意味着，如果两个源文件具有具有内部链接的同名标识符，则这些标识符将被视为独立标识符（并且不会因具有重复定义而导致 ODR 违规）。
+
+- Global variables identifiers: internal linkage while `static`, external linkage by default.
+- `const`/`constexpr` global variables identifiers: internal linkage by default, external linkage while `extern`.
+- Function identifiers: internal linkage while `static`, external linkage by default.
+- Local variables identifiers: no linkage
+
+### Global variables with internal linkage
+
+```cpp
+// a.cpp
+[[maybe_unused]] constexpr int g_x { 2 }; // this internal g_x is only accessible within a.cpp
+```
+
+```cpp
+// main.cpp
+static int g_x { 3 }; // this separate internal g_x is only accessible within main.cpp
+
+int main()
+{
+    std::cout << g_x << '\n'; // uses main.cpp's g_x, prints 3
+    return 0;
+}
+```
+
+### Const variables have internal linkage by default
+
+The C++11 standard (appendix C) provides the rationale for why const variables have internal linkage by default: “Because const objects can be used as compile-time values in C++, this feature urges programmers to provide explicit initializer values for each const. This feature allows the user to put const objects in header files that are included in many compilation units.”
+C++11 标准（附录 C）提供了 const 变量默认具有内部链接的基本原理：“由于 const 对象可以用作 C++ 中的编译时值，因此此功能敦促程序员为每个 const 提供显式初始值设定项值。此功能允许用户将 const 对象放在包含在许多编译单元中的头文件中。
+
+The designers of C++ intended two things:
+C++ 的设计者打算做两件事：
+
+- Const objects should be usable in constant expressions. In order to be usable in a constant expression, the compiler must have seen a definition (not a declaration) so it be evaluated at compile-time.
+    const 对象应该可以在常量表达式中使用。为了在常量表达式中可用，编译器必须看到定义（而不是声明），以便在编译时对其进行评估。
+- Const objects should be able to be propagated via header files.
+    Const 对象应该能够通过头文件传播。
+
+Objects with external linkage can only be defined in a single translation unit without violating the ODR -- other translation units must access those objects via a forward declaration. If const objects had external linkage by default, they would only be usable in constant expressions in the single translation unit containing the definition, and they could not be effectively propagated via header files, as #including the header into more than one source file would result in an ODR violation.
+具有外部链接的对象只能在单个翻译单元中定义，而不会违反 ODR —— 其他翻译单元必须通过正向声明访问这些对象。如果 const 对象默认具有外部链接，则它们只能在包含定义的单个翻译单元中的常量表达式中使用，并且无法通过头文件有效地传播，因为将头文件 #including 到多个源文件中将导致 ODR 冲突。
+
+Objects with internal linkage can have a definition in each translation unit where they are needed without violating the ODR. This allows const objects to be placed in a header file and #included into as many translation units as desired without violating the ODR. And since each translation unit has a definition rather than a declaration, this ensures that those constants can be used in constant expressions within the translation unit.
+具有内部链接的对象可以在每个需要它们的转换单元中有一个定义，而不会违反 ODR。这允许将 const 对象放置在头文件中，并根据需要 #included 到任意数量的转换单元中，而不会违反 ODR。由于每个翻译单元都有一个定义而不是声明，这确保了这些常量可以在翻译单元内的常量表达式中使用。
+
+Inline variables (which can have external linkage without causing ODR violations) weren’t introduced until C++17.
+内联变量（可以具有外部链接而不导致 ODR 冲突）直到 C++17 才被引入。
+
+### Functions with internal linkage
+
+```cpp
+// add.cpp
+// This function is declared as static, and can now be used only within this file
+// Attempts to access it from another file via a function forward declaration will fail
+[[maybe_unused]] static int add(int x, int y)
+{
+    return x + y;
+}
+```
+
+```cpp
+// main.cpp
+int add(int x, int y); // forward declaration for function add
+
+int main()
+{
+    std::cout << add(3, 4) << '\n';
+    return 0;
+}
+```
+
+### The one-definition rule and internal linkage
+
+ODR: an object or function can’t have more than one definition, either within a file or a program. 一个对象或函数不能有多个定义，无论是在文件还是程序中。
+
+internal objects (and functions) that are defined in different files are considered to be independent entities (even if their names and types are identical). 在不同文件中定义的内部对象（和函数）被视为独立实体（即使它们的名称和类型相同）。
+
+## 7.7 — External linkage and variable forward declarations
+
+An identifier with **external linkage** can be used both from the file in which it is defined, and from other code files (via a forward declaration).
+具有外部链接的标识符既可以从定义它的文件中查看和使用，也可以从其他代码文件（通过前向声明）中使用。
+
+| Type            | Definition        | Forward declaration                             |
+| --------------- | ----------------- | ----------------------------------------------- |
+| Function        | implicit external | implicit external                               |
+| Global variable | implicit external | explicit external (otherwise become definition) |
+
+Note that the **const globals** have *internal links* by default, while the **non-const globals** have *external links* by default.
+
+```cpp
+// Global variable forward declarations (extern w/ no initializer):
+extern int g_y;                 // forward declaration for non-constant global variable
+extern const int g_y;           // forward declaration for const global variable
+extern constexpr int g_y;       // not allowed: constexpr variables can't be forward declared
+
+// External global variable definitions (no extern)
+int g_x;                        // defines non-initialized external global variable (zero initialized by default)
+int g_x { 1 };                  // defines initialized external global variable
+// External const global variable definitions (extern w/ initializer)
+extern const int g_x { 2 };     // defines initialized const external global variable
+extern constexpr int g_x { 3 }; // defines initialized constexpr external global variable
+```
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Only use <code>extern</code> for global variable forward declarations or const global variable definitions.<br>
+        只在全局变量前向声明或全局 const 定义中使用<code>extern</code>。
+	</p>
+    <p style="margin: 1;">
+        Do not use <code>extern</code> for non-const global variable definitions (they are implicitly <code>extern</code>).<br>
+        不要对全局非 const 变量定义使用<code>extern</code>（他们是隐式<code>extern</code>的）。
+	</p>
+</div>
+
+**Whether to use `extern` explicitly**
+
+Definition:
+
+| Type                      | `extern` explicitly ? |
+| ------------------------- | --------------------- |
+| Function                  | No                    |
+| Non-const global variable | No                    |
+| Const global variable     | Yes                   |
+
+Forward declaration:
+
+| Type                      | `extern` explicitly ? |
+| ------------------------- | --------------------- |
+| Function                  | No                    |
+| Non-const global variable | Yes                   |
+| Const global variable     | Yes                   |
+
+## 7.8 — Why (non-const) global variables are evil
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Use local variables instead of global variables whenever possible.<br>
+        尽可能使用局部变量而不是全局变量。
+	</p>
+    <p style="margin: 1;">
+        Do not use non-const variableswhenever possible.<br>
+        尽可能不要使用非 const 全局变量。
+	</p>
+</div>
+
+## 7.9 — Inline functions and variables
+
+```cpp
+int min(int x, int y)
+{
+    return (x < y) ? x : y;
+}
+
+int main()
+{
+    std::cout << min(5, 6) << '\n';
+    std::cout << min(3, 2) << '\n';
+    return 0;
+}
+```
+
+For small functions (such as `min()` above), the overhead costs can be larger than the time needed to actually execute the function’s code!
+对于小型函数（例如上面的`min()`），overhead开销成本可能大于实际执行函数代码所需的时间！
+
+### C++ compiler Inline expansion
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Tip
+    </p>
+    <p style="margin: 1;">
+        Modern optimizing compilers make the decision about when functions should be expanded inline.<br>
+		现代优化编译器决定何时应内联扩展函数。
+    </p>
+</div>
+
+```cpp
+#include <iostream>
+
+int main()
+{
+    std::cout << ((5 < 6) ? 5 : 6) << '\n';
+    std::cout << ((3 < 2) ? 3 : 2) << '\n';
+    return 0;
+}
+```
+
+### The historical inline keyword
+
+Historically, C++ provided the keyword `inline` to be used as a hint to the compiler that a function would (probably) benefit from being expanded inline.
+历史上的C++ 提供关键字`inline`用作对编译器的提示，即函数（可能）会从内联扩展中受益。
+
+Modern optimizing compilers are typically good at determining which function calls should be made inline -- better than humans in most cases. As a result, the compiler will likely ignore or devalue any use of `inline` to request inline expansion for your functions.
+现代优化编译器通常擅长确定哪些函数调用应该内联 —— 在大多数情况下，它比人类更好。因此，编译器可能会忽略或贬低任何请求对函数的内联扩展的`inline`使用。
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Do not use the <code>inline</code> keyword to request inline expansion for your functions.<br>
+        不要使用<code>inline</code>关键字为您的函数请求内联扩展。
+	</p>
+</div>
+
+### The modern inline keyword
+
+In modern C++, the term `inline` has evolved to mean “multiple definitions are allowed”. Thus, an inline function is one that is allowed to be defined in multiple translation units (without violating the ODR).
+在现代 C++ 中，术语`inline`已演变为“允许多个定义”。因此，内联函数是允许在多个翻译单元中定义的函数（不违反 ODR）。
+
+The inline function is particularly useful for **header-only libraries**. 内联函数对于仅头文件库非常有用。
+
+<div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        For advanced readers
+    </p>
+    <p style="margin: 1;">
+        Implicitly inline functions 隐式内联函数:<br>
+        <ul>
+            <li>Functions defined inside a class, struct, or union type definition (14.3 -- Member functions).</li>
+        	<li>Constexpr / consteval functions (F.1 -- Constexpr functions).</li>
+        	<li>Functions implicitly instantiated from function templates (11.7 -- Function template instantiation).</li>
+    	</ul>
+    </p>
+</div>
+
+Note that making functions inline and defined in a header file increase compile times significantly. 注意将函数内联并在头文件中定义会显著增加编译时间。
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Avoid the use of the <code>inline</code> keyword unless you have a specific, compelling reason to do so (e.g. you’re defining those functions or variables in a header file).<br>
+        避免使用<code>inline</code>关键字，除非你有具体的、令人信服的理由（例如，你在头文件中定义这些函数或变量）。
+	</p>
+</div>
+
+### Inline variables (C++17) 
+
+C++17 introduces **inline variables**, which are variables that are allowed to be defined in multiple files.
+C++17 引入了内联变量，这些变量是允许在多个文件中定义的变量。
+
+<div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        For advanced readers
+    </p>
+    <p style="margin: 1;">
+        Implicitly inline variables 隐式内联变量:<br>
+        <ul>
+            <li>Static constexpr data members 15.6 -- Static member variables.</li>
+    	</ul>
+    </p>
+</div>
+
+## 7.10 — Sharing global constants across multiple files (using inline variables)
+
+### Global constants as internal variables (before C++17)
+
+constants.h:
+
+```cpp
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+namespace constants
+{
+    // Global constants have internal linkage by default
+    constexpr double pi { 3.14159 };
+    constexpr double avogadro { 6.0221413e23 };
+    constexpr double myGravity { 9.2 }; // m/s^2 -- gravity is light on this planet\
+}
+#endif
+```
+
+main.cpp:
+
+```cpp
+#include "constants.h" // include a copy of each constant in this file
+#include <iostream>
+int main()
+{
+    double radius{};
+    std::cin >> radius;
+    std::cout << "The circumference is: " << 2 * radius * constants::pi << '\n';
+    return 0;
+}
+```
+
+Each .cpp file gets an independent version of the global variable due to const globals have internal linkage by default!
+由于 const 全局变量具有内部链接，因此每个源文件都会获得全局变量的独立版本！
+
+**Advantages:**
+
+- Works prior to C++17.
+    适用于 C++17 之前的版本。
+- Can be used in constant expressions in any translation unit that includes them.
+    可以在包含它们的任何翻译单元的常量表达式中使用。
+
+**Downsides:**
+
+- Changing anything in the header file requires recompiling files including the header.
+    更改定义所在头文件中的任何内容都需要重新编译所有包括了那个头文件的文件。
+- Each translation unit including the header gets its own copy of the variable (use much memory).
+    每个翻译单元（包括 header）都会获得自己的变量副本（使用很多内存）。
+
+### Global constants as external variables (before C++17)
+
+constants.h:
+
+```cpp
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+namespace constants
+{
+    // Since the actual variables are inside a namespace, the forward declarations need to be inside a namespace as well
+    // We can't forward declare variables as constexpr, but we can forward declare them as (runtime) const
+    extern const double pi;
+    extern const double avogadro;
+    extern const double myGravity;
+}
+#endif
+```
+
+constants.cpp:
+
+```cpp
+#include "constants.h"
+namespace constants
+{
+    // We use extern to ensure these have external linkage
+    extern constexpr double pi { 3.14159 };
+    extern constexpr double avogadro { 6.0221413e23 };
+    extern constexpr double myGravity { 9.2 }; // m/s^2 -- gravity is light on this planet
+}
+```
+
+Now the symbolic constants will get instantiated only once (in *constants.cpp*), and all uses of these constants will be linked to the version instantiated in *constants.cpp*.
+现在，符号常量将只实例化一次 （在constants.cpp），并且这些常量的所有使用都将链接到constants.cpp中实例化的版本。
+
+However, Each .cpp file include constants.h only gets the forward declarations instead of the variable definitions, this means these variables can’t be used in a constant expression and the compiler may not be able to optimize these as much.
+但是，每个包括constants.h的源文件只得到了前向声明而没有变量定义，这意味着这些变量不能在常量表达式中使用，并且编译器可能无法对这些表达式进行尽可能多的优化。
+
+**Advantages:**
+
+- Works prior to C++17.
+    适用于 C++17 之前的版本。
+- Only one copy of each variable is required.
+    每个变量只需要一个副本。
+- Only requires recompilation of one file if the value of a constant changes.
+    当常量的值发生变化时，只需要重新编译定义常量那一个文件。
+
+**Disadvantages:**
+
+- Forward declarations and variable definitions are in separate files, and must be kept in sync.
+    前向声明和变量定义位于单独的文件中，必须保持同步。
+- Variables not usable in constant expressions outside of the file in which they are defined.
+    变量在定义它们的文件之外的常量表达式中不可用。
+
+### Global constants as inline variables (after C++17)
+
+Using global constexpr as inline variables to to avoid the disadvantages of both above ways.
+
+<div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        A reminder
+    </p>
+    <p style="margin: 1;">
+        Constexpr functions are implicitly inline, but constexpr variables are not implicitly inline. If you want an inline constexpr variable, you must explicitly mark it as <code>inline</code>.<br>
+        constexpr 函数是隐式内联的，但 constexpr 变量不是隐式内联的。如果你想要一个内联的 constexpr 变量，你必须显式地将其标记为 <code>inline</code>。
+    </p>
+</div>
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Key insight
+    </p>
+    <p style="margin: 1;">
+        Inline variables have external linkage by default to be visible to the linker. This is necessary so the linker can de-duplicate the definitions.<br>
+        默认情况下，内联变量具有外部链接以使它们对链接器可见。这是必需的，以便链接器可以删除重复的定义。
+    </p>
+    <p style="margin: 1;">
+        Non-inline constexpr variables have internal linkage. If included into multiple translation units, each translation unit will get its own copy of the variable. This is not an ODR violation because they are not exposed to the linker.<br>
+        非内联 constexpr 变量具有内部链接。如果包含在多个翻译单元中，则每个翻译单元都将获得自己的变量副本。这不是 ODR 冲突，因为它们不会向链接器公开。
+    </p>
+</div>
+
+constants.h:
+
+```cpp
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+namespace constants
+{
+    inline constexpr double pi { 3.14159 }; // note: now inline constexpr
+    inline constexpr double avogadro { 6.0221413e23 };
+    inline constexpr double myGravity { 9.2 }; // m/s^2 -- gravity is light on this planet
+}
+#endif
+```
+
+**Advantages:**
+
+- Can be used in constant expressions in any translation unit that includes them.
+    可以在包含它们的任何翻译单元的常量表达式中使用。
+- Only one copy of each variable is required.
+    每个变量只需要一个副本。
+
+**Disadvantages:**
+
+- Only works in C++17 onward.
+    仅适用于 C++17 及更高版本。
+- Changing anything in the header file requires recompiling files including the header.
+    更改constants.h中的任何内容都需要重新编译所有包括头文件该的文件。
+
+## 7.11 — Static local variables
+
+### Static local (non-const) variables
+
+Automatic duration (default):
+
+```cpp
+void incrementAndPrint()
+{
+    int value{ 1 }; // automatic duration by default
+    ++value;
+    std::cout << value << '\n';
+} // value is destroyed here
+
+int main()
+{
+    incrementAndPrint();
+    incrementAndPrint();
+    incrementAndPrint();
+    return 0;
+}
+```
+
+```
+2
+2
+2
+```
+
+Static duration (using static keyword):
+
+```cpp
+void incrementAndPrint()
+{
+    static int s_value{ 1 }; // static duration via static keyword.  This initializer is only executed once.
+    ++s_value;
+    std::cout << s_value << '\n';
+} // s_value is not destroyed here, but becomes inaccessible because it goes out of scope
+
+int main()
+{
+    incrementAndPrint();
+    incrementAndPrint();
+    incrementAndPrint();
+    return 0;
+}
+```
+
+```
+2
+3
+4
+```
+
+**Initialization time:**
+
+- zero-initialized or constexpr initializer:
+    program start 程序开始时
+- no initializer or non-constexpr initializer:
+    zero-initialized at program start. 程序开始时，零-初始化
+    reinitialized the first time the variable definition is encountered (if non-constexpr initializer). 首次变量定义时再次初始化（如果 non-constexpr 初始化）
+    skipped on subsequent calls. 跳过随后的定义
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Initialize your static local variables.<br>
+        初始化静态局部变量。
+	</p>
+</div>
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Tip
+    </p>
+    <p style="margin: 1;">
+        Use “s_” to prefix static (static duration) local variables.<br>
+        使用 “s_” 来给静态 （静态持续时间） 局部变量添加前缀。
+    </p>
+</div>
+
+The typical uses of static local variables is for unique ID generators. 典型的 static local variables 用途是唯一ID生成器。
+
+```cpp
+int generateID()
+{
+    static int s_itemID{ 0 };
+    return s_itemID++; // makes copy of s_itemID, increments the real s_itemID, then returns the value in the copy
+}
+```
+
+Static variables offer some of the benefit of global variables (they don’t get destroyed until the end of the program) while limiting their visibility to block scope. This makes them easier to understand and safer to use.
+静态变量提供了全局变量的一些好处（它们在程序结束之前不会被销毁），同时将它们的可见性限制在块范围内。这使它们更易于理解且使用更安全。
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Key insight
+    </p>
+    <p style="margin: 1;">
+        A static local variable has block scope like a local variable, but its lifetime is until the end of the program like a global variable.<br>
+        静态局部变量与局部变量一样具有块范围，但其生命周期与全局变量一样直到程序结束。
+    </p>
+</div>
+
+### Static local const variables
+
+**Advantages:**
+
+When initialization is expensive, you only need to pay once. 当初始化成本昂贵时，只需付出一次。
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Key insight
+    </p>
+    <p style="margin: 1;">
+        Static local variables are best used to avoid expensive local object initialization each time a function is called.<br>
+        静态局部变量最好用于避免每次调用函数时进行昂贵的本地对象初始化。
+    </p>
+</div>
+
+**Don’t use static local variables to alter flow**
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Const static local variables are generally okay.<br>
+        const static 局部变量通常是没问题。
+	</p>
+    <p style="margin: 1;">
+        Non-const static local variables should generally be avoided. If you do use them, ensure the variable never needs to be reset, and isn’t used to alter program flow.<br>
+        通常应避免使用 non-const 静态局部变量。如果您确实使用它们，请确保该变量永远不需要重置，并且不用于更改程序流。
+	</p>
+</div>
+
+## 7.12 — Scope, duration, and linkage summary
+
+### Scope summary
+
+about where can see, and declaration
+
+**block (local) scope**: can only be accessed from the point of declaration until the end of the block.
+
+**global scope**: can be accessed from the point of declaration until the end of the file.
+
+### Duration summary
+
+about when the entity created and destroyed
+
+**automatic duration**: created at the point of definition, and destroyed when the block they are part of is exited.
+
+**static duration**: created when the program begins and destroyed when the program ends.
+
+**dynamic duration**: created and destroyed by programmer request.
+
+### Linkage summary
+
+**no linkage**: another declaration of the same identifier refers to a unique entity.
+
+**internal linkage**: a declaration of the same identifier within the same translation unit refers to the same object or function.
+
+**external linkage**: a declaration of the same identifier within the entire program refers to the same object or function.
+
+**Variable summary table**
+
+| Type                                     | Example                         | Scope  | Duration  | Linkage  | Notes                        |
+| :--------------------------------------- | :------------------------------ | :----- | :-------- | :------- | :--------------------------- |
+| Local variable                           | int x;                          | Block  | Automatic | None     |                              |
+| Static local variable                    | static int s_x;                 | Block  | Static    | None     |                              |
+| Dynamic local variable                   | int* x { new int{} };           | Block  | Dynamic   | None     |                              |
+| Function parameter                       | void foo(int x)                 | Block  | Automatic | None     |                              |
+| Internal non-const global variable       | static int g_x;                 | Global | Static    | Internal | Initialized or uninitialized |
+| External non-const global variable       | int g_x;                        | Global | Static    | External | Initialized or uninitialized |
+| Inline non-const global variable (C++17) | inline int g_x;                 | Global | Static    | External | Initialized or uninitialized |
+| Internal constant global variable        | constexpr int g_x { 1 };        | Global | Static    | Internal | Must be initialized          |
+| External constant global variable        | extern const int g_x { 1 };     | Global | Static    | External | Must be initialized          |
+| Inline constant global variable (C++17)  | inline constexpr int g_x { 1 }; | Global | Static    | External | Must be initialized          |
+
+**Forward declaration summary table**
+
+| Type                                      | Example                   | Notes                                             |
+| :---------------------------------------- | :------------------------ | :------------------------------------------------ |
+| Function forward declaration              | void foo(int x);          | Prototype only, no function body                  |
+| Non-constant variable forward declaration | extern int g_x;           | Must be uninitialized                             |
+| Const variable forward declaration        | extern const int g_x;     | Must be uninitialized                             |
+| Constexpr variable forward declaration    | extern constexpr int g_x; | Not allowed, constexpr cannot be forward declared |
+
+
+
+| Specifier    | Meaning                                                      | Note                |
+| :----------- | :----------------------------------------------------------- | :------------------ |
+| extern       | static (or thread_local) storage duration and external linkage |                     |
+| static       | static (or thread_local) storage duration and internal linkage |                     |
+| thread_local | thread storage duration                                      |                     |
+| mutable      | object allowed to be modified even if containing class is const |                     |
+| auto         | automatic storage duration                                   | Deprecated in C++11 |
+| register     | automatic storage duration and hint to the compiler to place in a register | Deprecated in C++17 |
+
+### My summary
+
