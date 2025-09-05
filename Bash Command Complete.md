@@ -47,6 +47,12 @@ uesrname@hostname:~$ pwd
 ```bash
 uesrname@hostname:~$ ls
 Applications   Desktop   Documents   Downloads   help   Music   Pictures   Videos
+uesrname@hostname:~$ ls -1  # One item per line
+Applications
+Desktop
+Documents
+Downloads
+...
 uesrname@hostname:~$ ls -d Documents  #-d, --directory: list directories themselves, not their contents. This can check if a folder exits
 Documents
 uesrname@hostname:~$ ls -a /  #Shows all, including hidden ones and . , .. 

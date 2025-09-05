@@ -3065,6 +3065,9 @@ Local variables are automatically created at the point of definition and automat
 An identifier’s **linkage** determines whether a declaration of that same identifier in a different scope refers to the same object (or function).
 标识符的**linkage**属性确定不同范围内相同标识符的声明是否引用同一对象（或函数）。
 
+Each declaration of an identifier with no linkage refers to a unique object or function.
+没有链接的标识符的每个声明都引用一个唯一的对象或函数。
+
 ```cpp
     int x { 2 }; // local variable, no linkage
     {
@@ -3223,7 +3226,7 @@ C++ 的设计者打算做两件事：
     Const 对象应该能够通过头文件传播。
 
 Objects with external linkage can only be defined in a single translation unit without violating the ODR -- other translation units must access those objects via a forward declaration. If const objects had external linkage by default, they would only be usable in constant expressions in the single translation unit containing the definition, and they could not be effectively propagated via header files, as #including the header into more than one source file would result in an ODR violation.
-具有外部链接的对象只能在单个翻译单元中定义，而不会违反 ODR —— 其他翻译单元必须通过正向声明访问这些对象。如果 const 对象默认具有外部链接，则它们只能在包含定义的单个翻译单元中的常量表达式中使用，并且无法通过头文件有效地传播，因为将头文件 #including 到多个源文件中将导致 ODR 冲突。
+具有外部链接的对象只能在单个翻译单元中定义才能不违反 ODR —— 其他翻译单元必须通过正向声明访问这些对象。如果 const 对象默认具有外部链接，则它们只能在包含定义的单个翻译单元中的常量表达式中使用，并且无法通过头文件有效地传播，因为将头文件 #including 到多个源文件中将导致 ODR 冲突。
 
 Objects with internal linkage can have a definition in each translation unit where they are needed without violating the ODR. This allows const objects to be placed in a header file and #included into as many translation units as desired without violating the ODR. And since each translation unit has a definition rather than a declaration, this ensures that those constants can be used in constant expressions within the translation unit.
 具有内部链接的对象可以在每个需要它们的转换单元中有一个定义，而不会违反 ODR。这允许将 const 对象放置在头文件中，并根据需要 #included 到任意数量的转换单元中，而不会违反 ODR。由于每个翻译单元都有一个定义而不是声明，这确保了这些常量可以在翻译单元内的常量表达式中使用。
@@ -3265,10 +3268,10 @@ internal objects (and functions) that are defined in different files are conside
 An identifier with **external linkage** can be used both from the file in which it is defined, and from other code files (via a forward declaration).
 具有外部链接的标识符既可以从定义它的文件中查看和使用，也可以从其他代码文件（通过前向声明）中使用。
 
-| Type            | Definition        | Forward declaration                             |
-| --------------- | ----------------- | ----------------------------------------------- |
-| Function        | implicit external | implicit external                               |
-| Global variable | implicit external | explicit external (otherwise become definition) |
+| Type            | Definition                                                   | Forward declaration                                  |
+| --------------- | ------------------------------------------------------------ | ---------------------------------------------------- |
+| Function        | implicit external                                            | implicit external                                    |
+| Global variable | implicit external<br />(can not explicit if non-initialized) | explicit external<br />(otherwise become definition) |
 
 Note that the **const globals** have *internal links* by default, while the **non-const globals** have *external links* by default.
 
@@ -3805,4 +3808,320 @@ about when the entity created and destroyed
 | register     | automatic storage duration and hint to the compiler to place in a register | Deprecated in C++17 |
 
 ### My summary
+
+
+
+# 8 Control Flow
+
+## 8.1 — Control flow introduction
+
+| Category               | Meaning                                                      | Implemented in C++ by            |
+| :--------------------- | :----------------------------------------------------------- | :------------------------------- |
+| Conditional statements | Causes a sequence of code to execute only if some condition is met. | if, else, switch                 |
+| Jumps                  | Tells the CPU to start executing the statements at some other location. | goto, break, continue            |
+| Function calls         | Jump to some other location and back.                        | function calls, return           |
+| Loops                  | Repeatedly execute some sequence of code zero or more times, until some condition is met. | while, do-while, for, ranged-for |
+| Halts                  | Terminate the program.                                       | std::exit(), std::abort()        |
+| Exceptions             | A special kind of flow control structure designed for error handling. | try, throw, catch                |
+
+## 8.2 — If statements and blocks
+
+```c++
+if (condition1)
+{
+    statement1;
+}
+else if (condition2)
+{
+    statement2;
+}
+//...
+else
+{
+    statementx;
+}
+```
+
+Do not use implicit blocks
+
+```
+if (condition1)
+    statement1;
+else if (condition2)
+    statement2;
+//...
+else
+    statementx;
+```
+
+**If-else vs if-if are different**
+
+```cpp
+void ifelse(bool a, bool b, bool c)
+{
+    if (a)      // always evaluates
+        std::cout << "a";
+    else if (b) // only evaluates when prior if-statement condition is false
+        std::cout << "b";
+    else if (c) // only evaluates when prior if-statement condition is false
+        std::cout << "c";
+}
+
+void ifif(bool a, bool b, bool c)
+{
+    if (a) // always evaluates
+        std::cout << "a";
+    if (b) // always evaluates
+        std::cout << "b";
+    if (c) // always evaluates
+        std::cout << "c";
+}
+```
+
+## 8.3 — Common if statement problems
+
+## 8.4 — Constexpr if statements
+
+```cpp
+	constexpr double gravity{ 9.8 };
+	// if (gravity == 9.8) // constant expression, always true, however the following line is recommended
+	if constexpr (gravity == 9.8)
+		std::cout << "Gravity is normal.\n";
+	else
+		std::cout << "We are not on Earth.\n";
+```
+
+compile as:
+
+```cpp
+	constexpr double gravity{ 9.8 };
+	std::cout << "Gravity is normal.\n";
+```
+
+## 8.5 — Switch statement basics
+
+```cpp
+void printDigitName(int x)
+{
+    switch (x) // x evaluates to 3
+    {
+        case 1: {
+            std::cout << "One";
+            break;
+        }
+        case 2: {
+            std::cout << "Two";
+            break;
+        }
+        case 3: {
+            std::cout << "Three"; // execution starts here
+            break; // jump to the end of the switch block
+        }
+        default: {
+            std::cout << "Unknown";
+            break;
+        }
+    }
+}
+```
+
+The condition in a switch must evaluate to an *integral type* or an *enumerated type*, or be *convertible to one*.
+`switch()`中的表达式必须是整型或者枚举类型，或者可以被转换为这些类型。
+
+## 8.6 — Switch fallthrough and scoping
+
+## 8.7 — Goto statements
+
+## 8.8 — Introduction to loops and while statements
+
+```cpp
+    int count{ 1 };
+    while (count <= 10)
+    {
+        std::cout << count << ' ';
+        ++count;
+    }
+```
+
+## 8.9 — Do while statements
+
+```cpp
+    int selection {};
+    bool invalid { true }; // new variable just to gate the loop
+    while (invalid)
+    {
+        std::cout << "Please make a selection: \n";
+        std::cout << "1) Addition\n";
+        std::cout << "2) Subtraction\n";
+        std::cout << "3) Multiplication\n";
+        std::cout << "4) Division\n";
+
+        std::cin >> selection;
+        invalid = (selection < 1 || selection > 4);
+    }
+    std::cout << "You selected option #" << selection << '\n';
+```
+
+## 8.10 — For statements
+
+```cpp
+    // selection must be declared outside of the do-while-loop, so we can use it later
+    int selection {};
+    do
+    {
+        std::cout << "Please make a selection: \n";
+        std::cout << "1) Addition\n";
+        std::cout << "2) Subtraction\n";
+        std::cout << "3) Multiplication\n";
+        std::cout << "4) Division\n";
+        std::cin >> selection;
+    }
+    while (selection < 1 || selection > 4);
+    std::cout << "You selected option #" << selection << '\n';
+```
+
+
+
+```cpp
+    for (int i{ 1 }; i <= 10; ++i)
+    {
+        std::cout << i << ' ';
+    }
+    std::cout << '\n';
+```
+
+## 8.11 — Break and continue
+
+### Breaking a switch
+
+```cpp
+    switch (ch)
+    {
+    case '+':
+        std::cout << x << " + " << y << " = " << x + y << '\n';
+        break; // don't fall-through to next case
+    case '-':
+        std::cout << x << " - " << y << " = " << x - y << '\n';
+        break; // don't fall-through to next case
+    case '*':
+        std::cout << x << " * " << y << " = " << x * y << '\n';
+        break; // don't fall-through to next case
+    case '/':
+        std::cout << x << " / " << y << " = " << x / y << '\n';
+        break;
+    }
+```
+
+### Breaking a loop
+
+```cpp
+    int sum{ 0 };
+    // Allow the user to enter up to 10 numbers
+    for (int count{ 0 }; count < 10; ++count)
+    {
+        std::cout << "Enter a number to add, or 0 to exit: ";
+        int num{};
+        std::cin >> num;
+        // exit loop if user enters 0
+        if (num == 0)
+            break; // exit the loop now
+        // otherwise add number to our sum
+        sum += num;
+    }
+    // execution will continue here after the break
+    std::cout << "The sum of all the numbers you entered is: " << sum << '\n';
+```
+
+### Continue a loop
+
+```cpp
+    for (int count{ 0 }; count < 10; ++count)
+    {
+        // if the number is divisible by 4, skip this iteration
+        if ((count % 4) == 0)
+            continue; // go to next iteration
+        // If the number is not divisible by 4, keep going
+        std::cout << count << '\n';
+    }
+```
+
+## 8.12 — Halts (exiting your program early)
+
+### `std::exit()`
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Key insight
+    </p>
+    <p style="margin: 1;">
+        <code>std::exit()</code> is called implicitly when <code>main()</code> returns.<br>
+        <code>std::exit()</code>在<code>main()</code>返回后隐式调用。
+    </p>
+</div>
+
+using `std::exit()` explicitly:
+
+```cpp
+#include <cstdlib> // for std::exit()
+#include <iostream>
+
+void cleanup()
+{
+    // code here to do any kind of cleanup required
+    std::cout << "cleanup!\n";
+}
+
+int main()
+{
+    std::cout << 1 << '\n';
+    cleanup();
+    std::exit(0); // terminate and return status code 0 to operating system
+    // The following statements never execute
+    std::cout << 2 << '\n';
+    return 0;
+}
+```
+
+<div style="border: 2px solid #d89696; background-color: #ffd6d6; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Warning
+    </p>
+    <p style="margin: 1;">
+        The <code>std::exit()</code> function does not clean up local variables in the current function or up the call stack.<br>
+        <code>std::exit()</code>不会清理当前函数中的局部变量或调用堆栈。
+    </p>
+</div>
+
+### `std::atexit()`
+
+```cpp
+#include <cstdlib> // for std::exit()
+#include <iostream>
+
+void cleanup()
+{
+    // code here to do any kind of cleanup required
+    std::cout << "cleanup!\n";
+}
+
+int main()
+{
+    // register cleanup() to be called automatically when std::exit() is called
+    std::atexit(cleanup); // note: we use cleanup rather than cleanup() since we're not making a function call to cleanup() right now
+    std::cout << 1 << '\n';
+    std::exit(0); // terminate and return status code 0 to operating system
+    // The following statements never execute
+    std::cout << 2 << '\n';
+    return 0;
+}
+```
+
+- `std::atexit()` also affect the implicitly called `std::exit()` (while `main()` terminates)
+    `std::atexit()`也会影响到`main()`终止时隐式调用的`std::exit()`
+- The function being registered must be void and take no parameters
+    被注册的函数必须没有参数也没有返回值
+- Registering multiple function by `std::atexit()` is supported, and they will be called in reverse order of registration.
+    `std::atexit()`可以注册多个函数，它们将以注册时相反的顺序被调用
+
+### std::abort and std::terminate
 
