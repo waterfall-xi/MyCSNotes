@@ -4125,3 +4125,145 @@ int main()
 
 ### std::abort and std::terminate
 
+## 8.13 — Introduction to random number generation
+
+## 8.14 — Generating random numbers using Mersenne Twister
+
+## 8.15 — Global random numbers (Random.h)
+
+# 9 Error Detection and Handling
+
+## 9.1 — Introduction to testing your code
+
+### Informal testing
+
+```cpp
+#include <iostream>
+
+bool isLowerVowel(char c)
+{
+    switch (c)
+    {
+    case 'a':
+    case 'e':
+    case 'i':
+    case 'o':
+    case 'u':
+        return true;
+    default:
+        return false;
+    }
+}
+
+int main()
+{
+    std::cout << isLowerVowel('a') << '\n'; // temporary test code, should produce 1
+    std::cout << isLowerVowel('q') << '\n'; // temporary test code, should produce 0
+    return 0;
+}
+```
+
+### Automatic test functions
+
+```cpp
+#include <iostream>
+
+bool isLowerVowel(char c)
+{
+    // ...
+}
+
+// returns the number of the test that failed, or 0 if all tests passed
+int testVowel()
+{
+    if (!isLowerVowel('a')) return 1;
+    if (isLowerVowel('q')) return 2;
+    return 0;
+}
+
+int main()
+{
+    int result { testVowel() };
+    if (result != 0)
+        std::cout << "testVowel() test " << result << " failed.\n";
+    else
+        std::cout << "testVowel() tests passed.\n";
+    return 0;
+}
+```
+
+Using `assert` and `NDEBUG`
+
+A better method is to use `assert`, which will cause the program to abort with an error message if any test fails. We don’t have to create and handle test case numbers this way.
+更好的方法是使用 `assert`，如果任何测试失败，这将导致程序中止并显示错误消息。我们不必以这种方式创建和处理测试用例编号。
+
+```cpp
+#include <cassert> // for assert
+#include <cstdlib> // for std::abort
+#include <iostream>
+
+bool isLowerVowel(char c)
+{
+    // ...
+}
+
+// Program will halt on any failed test case
+int testVowel()
+{
+#ifdef NDEBUG
+    // If NDEBUG is defined (will be automatically defined while use -DNDEBUG compile config), asserts are compiled out.
+    // Since this function requires asserts to not be compiled out, we'll terminate the program if this function is called when NDEBUG is defined.
+    std::cerr << "Tests run with NDEBUG defined (asserts compiled out)";
+    std::abort();
+#endif
+    assert(isLowerVowel('a'));
+    assert(isLowerVowel('e'));
+    assert(isLowerVowel('i'));
+    assert(isLowerVowel('o'));
+    assert(isLowerVowel('u'));
+    assert(!isLowerVowel('b'));
+    assert(!isLowerVowel('q'));
+    assert(!isLowerVowel('y'));
+    assert(!isLowerVowel('z'));
+    return 0;
+}
+
+int main()
+{
+    testVowel();
+    // If we reached here, all tests must have passed
+    std::cout << "All tests succeeded\n";
+    return 0;
+}
+```
+
+## 9.2 — Code coverage
+
+### Statement coverage
+
+The percentage of statements in your code that have been exercised by testing routines.
+你的代码中被测试用例执行过的语句百分比
+
+### Branch coverage
+
+The percentage of branches that have been executed, each possible branch counted separately.
+分支被执行的百分比，每个有可能的分支被独立计数。
+
+### Loop coverage (informally called the 0, 1, 2 test)
+
+**Loop coverage** (informally called **the 0, 1, 2 test**) says that if you have a loop in your code, you should ensure it works properly when it iterates 0 times, 1 time, and 2 times. If it works correctly for the 2-iteration case, it should work correctly for all iterations greater than 2. These three tests therefore cover all possibilities (since a loop can’t execute a negative number of times).
+循环覆盖率（非正式地称为 0、1、2 测试）表示，如果您的代码中有循环，则应确保它在迭代 0 次、1 次和 2 次时正常工作。如果它适用于 2 次迭代情况，则它应该适用于大于 2 的所有迭代。因此，这三个测试涵盖了所有可能性（因为循环不能执行负数）。
+
+### Testing different categories of input
+
+For integers, make sure you’ve considered how your function handles negative values, zero, and positive values. You should also check for overflow if that’s relevant.
+对于整数，请确保已考虑函数如何处理负值、零值和正值。如果相关，您还应该检查溢出。
+
+For floating point numbers, make sure you’ve considered how your function handles values that have precision issues (values that are slightly larger or smaller than expected). Good `double` type values to test with are `0.1` and `-0.1` (to test numbers that are slightly larger than expected) and `0.7` and `-0.7` (to test numbers that are slightly smaller than expected).
+对于浮点数，请确保已考虑函数如何处理存在精度问题的值（值略大于或小于预期）。要测试的良好`双精度`类型值是 `0.1` 和 `-0.1`（用于测试略大于预期的数字）以及 `0.7` 和 `-0.7`（用于测试略小于预期的数字）。
+
+For strings, make sure you’ve considered how your function handles an empty string, an alphanumeric string, strings that have whitespace (leading, trailing, and inner), and strings that are all whitespace.
+对于字符串，请确保您已经考虑了函数如何处理空字符串、字母数字字符串、具有空格的字符串（前导、尾随和内部）以及全为空格的字符串。
+
+If your function takes a pointer, don’t forget to test `nullptr` as well (don’t worry if this doesn’t make sense, we haven’t covered it yet).
+如果你的函数接受指针，不要忘记测试 `nullptr`（如果这没有意义，请不要担心，我们还没有介绍过它）。
