@@ -4267,3 +4267,123 @@ For strings, make sure you’ve considered how your function handles an empty st
 
 If your function takes a pointer, don’t forget to test `nullptr` as well (don’t worry if this doesn’t make sense, we haven’t covered it yet).
 如果你的函数接受指针，不要忘记测试 `nullptr`（如果这没有意义，请不要担心，我们还没有介绍过它）。
+
+## 9.3 — Common semantic errors in C++
+
+## 9.4 — Detecting and handling errors
+
+4 general strategies to handling errors in functions:
+
+- Handle the error within the function
+    处理函数中的错误
+- Pass the error back to the caller to deal with
+    将错误传递回调用方进行处理
+- Halt the program
+    终止程序
+- Throw an exception
+    抛出异常
+
+### Handling the error within the function
+
+- retry until successful
+    重试直到成功
+- cancel the operation being executed
+    取消当前操作
+
+### Passing errors back to the caller
+
+```cpp
+// The reciprocal of x is 1/x, returns 0.0 if x=0
+constexpr double error_no_reciprocal { 0.0 }; // could also be placed in namespace
+
+double reciprocal(double x)
+{
+    if (x == 0.0)
+       return error_no_reciprocal;
+    return 1.0 / x;
+}
+```
+
+A **sentinel value** is a value that has some special meaning in the context of a function or algorithm.
+
+### Fatal errors
+
+### Exceptions
+
+## 9.5 — std::cin and handling invalid input
+
+## 9.6 — Assert and static_assert
+
+### Preconditions, invariants, and postconditions
+
+A **precondition** is any condition that must be true prior to the execution of some section of code.
+
+An **invariant** is a condition that must be true while some section of code is executing.
+
+A **postcondition** is something that must be true after the execution of some section of code.
+
+### Assertions
+
+```cpp
+#include <cassert> // for assert()
+#include <cmath> // for std::sqrt
+#include <iostream>
+
+double calculateTimeUntilObjectHitsGround(double initialHeight, double gravity)
+{
+  assert(gravity > 0.0); // The object won't reach the ground unless there is positive gravity.
+  if (initialHeight <= 0.0)
+  { // The object is already on the ground. Or buried.
+    return 0.0;
+  }
+  return std::sqrt((2.0 * initialHeight) / gravity);
+}
+
+int main()
+{
+  std::cout << "Took " << calculateTimeUntilObjectHitsGround(100.0, -9.8) << " second(s)\n";
+  return 0;
+}
+```
+
+**Making your assert statements more descriptive**
+
+```cpp
+assert(found);
+```
+
+```
+Assertion failed: found, file C:\\VCProjects\\Test.cpp, line 34
+```
+
+```cpp
+assert(found && "Car could not be found in database");
+```
+
+```
+Assertion failed: found && "Car could not be found in database", file C:\\VCProjects\\Test.cpp, line 34
+```
+
+### static_assert
+
+A **static_assert** is an assertion that is checked at compile-time, with a failing `static_assert` causing a compile error. `static_assert` is a keyword, so no header needs to be included to use it.
+**static_assert**是在编译时期检查的断言，失败时产生编译错误，它是一个关键字，所以不需要包含头文件来使用它。
+
+```cpp
+static_assert(condition, diagnostic_message)
+```
+
+- Because `static_assert` is evaluated by the compiler, the condition must be a constant expression.
+    由于`static_assert`由编译器计算，因此条件必须是常量表达式。
+- `static_assert` can be placed anywhere in the code file (even in the global namespace).
+    `static_assert`可以放置在代码文件中的任何位置（甚至在全局命名空间中）。
+- `static_assert` is not deactivated in release builds (like normal `assert` is).
+    `static_assert`不会在发布版本中停用（就像正常`assert`一样）。
+- Because the compiler does the evaluation, there is no runtime cost to a `static_assert`.
+    由于编译器执行评估，因此`static_assert`没有运行时成本。
+
+### Asserts vs error handling
+
+Assertions: *programming errors* during development by documenting assumptions about things that should never happen.
+
+Error handling: gracefully handle cases that could happen (however rarely) in a release build.
