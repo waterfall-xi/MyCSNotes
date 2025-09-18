@@ -4387,3 +4387,282 @@ static_assert(condition, diagnostic_message)
 Assertions: *programming errors* during development by documenting assumptions about things that should never happen.
 
 Error handling: gracefully handle cases that could happen (however rarely) in a release build.
+
+# 10 Type Conversion, Type Aliases, and Type Deduction
+
+## 10.1 — Implicit type conversion
+
+### Why conversions are needed
+
+**if just copy the bits...**
+
+```cpp
+    int n { 3 };                        // here's int value 3
+    float f {};                         // here's our float variable
+    std::memcpy(&f, &n, sizeof(float)); // copy the bits from n into f
+    std::cout << f << '\n';             // print f (containing the bits from n)
+```
+
+### The standard conversions
+
+| Category                  | Meaning                                                      | Link                                                         |
+| :------------------------ | :----------------------------------------------------------- | :----------------------------------------------------------- |
+| Numeric promotions        | Conversions of small integral types to `int` or `unsigned int`, and of `float` to `double`. | [10.2 -- Floating-point and integral promotion](https://www.learncpp.com/cpp-tutorial/floating-point-and-integral-promotion/) |
+| Numeric conversions       | Other integral and floating point conversions that aren’t promotions. | [10.3 -- Numeric conversions](https://www.learncpp.com/cpp-tutorial/numeric-conversions/) |
+| Qualification conversions | Conversions that add or remove `const` or `volatile`.        |                                                              |
+| Value transformations     | Conversions that change the value category of an expression  | [12.2 -- Value categories (lvalues and rvalues)](https://www.learncpp.com/cpp-tutorial/value-categories-lvalues-and-rvalues/) |
+| Pointer conversions       | Conversions from `std::nullptr` to pointer types, or pointer types to other pointer types |                                                              |
+
+## 10.2 — Floating-point and integral promotion
+
+A 64-bit processors can manipulate 8-bit or 16-bit values directly but often slower than manipulating 64-bit values. So considering convert the narrower numeric types to wider types. And this is a value-preserving conversion.
+
+**Numeric promotion reduces redundancy**
+
+```
+void printInt(int x)  // x could be short, char, unsigned char...
+{
+    std::cout << x << '\n';
+}
+```
+
+**Not all widening conversions are numeric promotions**
+
+Some widening type conversions (such as `char` to `short`, or `int` to `long`) are not considered to be numeric promotions in C++. This is because such conversions do not assist in the goal of converting smaller types to larger types that can be processed more efficiently.
+一些加宽类型转换（例如 `char` 到 `short`，或 `int` 到 `long`）在 C++ 中不被视为数字提升。这是因为此类转换无助于将较小的类型转换为可以更有效地处理的较大类型的目标。
+
+## 10.3 — Numeric conversions
+
+- Converting an integral type to any other integral type (excluding integral promotions)
+- Converting a floating point type to any other floating point type (excluding floating point promotions)
+- Converting a floating point type to any integral type
+- Converting an integral type to any floating point type
+- Converting an integral type or a floating point type to a bool
+
+Unlike numeric promotions, many numeric conversions are unsafe.
+
+**Value-preserving conversions**
+
+1. Safe.
+2. The destination type can exactly represent all possible values in the source type.
+3. Can always be converted back.
+
+**Reinterpretive conversions**
+
+1. Unsafe.
+2. The converted value may be different than the source value.
+3. Can always be converted back.
+
+**Lossy conversions**
+
+1. Unsafe.
+2. The converted value may be different than the source value.
+3. Converting back will result in a different value.
+
+## 10.4 — Narrowing conversions, list initialization, and constexpr initializers
+
+## 10.5 — Arithmetic conversions
+
+In C++, if operators is invoked with different types operands , one or both of the operands will be implicitly converted to matching types using a set of rules called the **usual arithmetic conversions**. The matching type produced as a result of the usual arithmetic conversion rules is called the **common type** of the operands.
+在 C++ 中，如果使用不同类型的操作数调用运算符，则使用一组称为通常算术转换的规则将其中一个或两个作数隐式转换为匹配类型。由于通常的算术转换规则而产生的匹配类型称为作数的通用类型。
+
+**The operators that require operands of the same type**
+
+- The binary arithmetic operators: +, -, *, /, %
+- The binary relational operators: <, >, <=, >=, ==, !=
+- The binary bitwise arithmetic operators: &, ^, |
+- The conditional operator ?: (excluding the condition, which is expected to be of type `bool`)
+
+## 10.6 — Explicit type conversion (casting) and static_cast
+
+| Cast             | Description                                                  | Safe?                 |
+| :--------------- | :----------------------------------------------------------- | :-------------------- |
+| static_cast      | Performs compile-time type conversions between related types. | Yes                   |
+| dynamic_cast     | Performs runtime type conversions on pointers or references in an polymorphic (inheritance) hierarchy | Yes                   |
+| const_cast       | Adds or removes const.                                       | Only for adding const |
+| reinterpret_cast | Reinterprets the bit-level representation of one type as if it were another type | No                    |
+| C-style casts    | Performs some combination of `static_cast`, `const_cast`, or `reinterpret_cast`. | No                    |
+
+<div style="border: 2px solid #d89696; background-color: #ffd6d6; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Warning
+    </p>
+    <p style="margin: 1;">
+        Avoid <code>const_cast</code> and <code>reinterpret_cast</code> unless you have a very good reason to use them.<br>
+        避免 <code>const_cast</code> 和 <code>reinterpret_cast</code> ，除非您有充分的理由使用它们。
+    </p>
+</div>
+
+**C-style cast**
+
+```cpp
+    int x { 10 };
+    int y { 4 };
+    std::cout << (double)x / y << '\n'; // C-style cast of x to double
+	std::cout << double(x) / y << '\n'; // function-style (C-style) cast of x to double
+```
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Avoid using C-style casts.<br>
+        避免使用 C 样式强制转换。
+	</p>
+</div>
+
+### static_cast
+
+```cpp
+    std::cout << static_cast<double>(x) / static_cast<double>(y) << '\n';
+```
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Favor <code>static_cast</code>.<br>
+        <code>static_cast</code> 优先。
+	</p>
+</div>
+
+## 10.7 — Typedefs and type aliases
+
+### Type aliases
+
+```cpp
+using Distance = double; // define Distance as an alias for type double
+Distance milesToDestination{ 3.4 }; // defines a variable of type double
+```
+
+### Typedefs
+
+```cpp
+// The following aliases are identical
+typedef long Miles;
+using Miles = long;
+```
+
+### Using type aliases for platform independent coding
+
+```cpp
+#ifdef INT_2_BYTES
+using int8_t = char;
+using int16_t = int;
+using int32_t = long;
+#else
+using int8_t = char;
+using int16_t = short;
+using int32_t = int;
+#endif
+```
+
+### Using type aliases to make complex types easier to read
+
+```cpp
+#include <string> // for std::string
+#include <vector> // for std::vector
+#include <utility> // for std::pair
+
+using VectPairSI = std::vector<std::pair<std::string, int>>; // make VectPairSI an alias for this crazy type
+
+bool hasDuplicates(VectPairSI pairlist) // use VectPairSI in a function parameter
+{
+    // some code here
+    return false;
+}
+```
+
+## 10.8 — Type deduction for objects using the auto keyword
+
+**Type deduction** (also sometimes called **type inference**) is a feature that allows the compiler to deduce the type of an object from the object’s initializer. When defining a variable, type deduction can be invoked by using the `auto` keyword can be used in place of the variable’s type:
+类型推导（有时也称为类型推断）是一种允许编译器从对象的初始值设定项中推断出对象的类型的特性。定义变量时，可以使用 `auto` 关键字代替变量的类型来应用类型推导：
+
+```cpp
+    auto d { 5.0 }; // 5.0 is a double literal, so d will be deduced as a double
+    auto i { 1 + 2 }; // 1 + 2 evaluates to an int, so i will be deduced as an int
+    auto x { i }; // i is an int, so x will be deduced as an int
+```
+
+**Type deduction drops** `const` **from the deduced type**
+
+```cpp
+    const int a { 5 };  // a has type const int
+    auto b { a };       // b has type int (const dropped)
+    const auto c { a }; // C has type const int (const dropped but reapplied)
+```
+
+**Type deduction for string literals**
+
+```cpp
+    using namespace std::literals; // easiest way to access the s and sv suffixes
+	auto s { "Hello, world" }; // s will be type const char*, not std::string
+    auto s1 { "goo"s };  // "goo"s is a std::string literal, so s1 will be deduced as a std::string
+    auto s2 { "moo"sv }; // "moo"sv is a std::string_view literal, so s2 will be deduced as a std::string_view
+```
+
+**Type deduction benefits and downsides**
+
+benefits:
+
+1. Make always initialize variable.
+2. Less performance-impacting conversions.
+
+downsides:
+
+1. Abscures an object’s type information
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Use type deduction for your variables when the type of the object doesn’t matter.<br>
+        当对象的类型无关紧要时，对变量使用类型推导。
+	</p>
+</div>
+
+## 10.9 — Type deduction for functions
+
+```cpp
+int add(int x, int y)
+{
+    return x + y;
+}
+```
+
+Since C++ 14, functions return type can deduction with `auto`:
+
+```cpp
+auto add(int x, int y)
+{
+    return x + y;
+}
+```
+
+When using an `auto` return type, all return statements within the function must return values of the same type, otherwise an error will result.
+
+Benefits:
+
+1. Let the compiler deduce the function’s return type negates the risk of a mismatched return type
+
+Downsides:
+
+1. Must be fully defined before used.
+2. Have to dig into the function body itself to determine return type. 
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Prefer explicit return types over return type deduction.<br>
+        首选显式返回类型而不是返回类型推导。
+	</p>
+</div>
+
+**Type deduction can’t be used for function parameter types**
+
+# 11 Function Overloading and Function Templates
