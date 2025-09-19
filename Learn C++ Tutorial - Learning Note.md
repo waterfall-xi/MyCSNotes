@@ -4666,3 +4666,238 @@ Downsides:
 **Type deduction can’t be used for function parameter types**
 
 # 11 Function Overloading and Function Templates
+
+## 11.1 — Introduction to function overloading
+
+```cpp
+int add(int x, int y) // integer version
+{
+    return x + y;
+}
+
+double add(double x, double y) // floating point version
+{
+    return x + y;
+}
+```
+
+## 11.2 — Function overload differentiation
+
+| Function property    | Used for differentiation | Notes                                                        |
+| :------------------- | :----------------------- | :----------------------------------------------------------- |
+| Number of parameters | Yes                      |                                                              |
+| Type of parameters   | Yes                      | Excludes typedefs, type aliases, and const qualifier on value parameters. Includes ellipses. |
+| Return type          | No                       |                                                              |
+| const or volatile    | Yes                      |                                                              |
+| Ref-qualifiers       | Yes                      |                                                              |
+
+For parameters passed by value, the const qualifier is not considered.
+
+```cpp
+void print(int);
+void print(const int); // not differentiated from print(int)
+```
+
+## 11.3 — Function overload resolution and ambiguous matches
+
+有关编译器重载函数匹配规则的内容复杂且繁琐，而实际开发情况不提倡甚至反对编写容易产生混淆和模糊的重载函数声明。因此我建议不必专门学习，待开发中遇到 ambiguous call 或 no matching function 编译错误时再针对性研究即可。
+
+1. exact match
+2. numeric promotion -> match
+3. numeric conversion -> match
+4. user-defined conversion -> match
+5. matching function that uses ellipsis -> match
+6. compile error: no matching function.
+
+
+
+**ambiguous match**: The compiler finds two or more matched functions in same step. 编译器在同一步骤发现多个匹配的函数
+
+```cpp
+void foo(int)
+
+void foo(const int&) // int& is a reference to a int
+
+    int x { 1 };
+    foo(x); // ambiguous match with foo(int) and foo(const int&)
+    // error: call of overloaded 'foo(int&)' is ambiguous
+```
+
+
+
+```cpp
+void print(int x)
+
+void print(double d)
+
+     print('a'); // char does not match int or double, so what happens?
+     print(5L); // long does not match int or double, so what happens?
+```
+
+## 11.4 — Deleting functions
+
+```cpp
+void printInt(int x)
+{
+    std::cout << x << '\n';
+}
+
+void printInt(char) = delete; // calls to this function will halt compilation
+void printInt(bool) = delete; // calls to this function will halt compilation
+
+int main()
+{
+    printInt(97);   // okay
+    printInt('a');  // compile error: function deleted
+    printInt(true); // compile error: function deleted
+    printInt(5.0);  // compile error: ambiguous match
+    return 0;
+}
+```
+
+`printInt(5.0)` is an interesting case, although `printInt(int)` is the only non-deleted function, the deleted functions are still considered as candidates in function overload resolution. Because none of these functions are unambiguously the best match, the compiler will issue an ambiguous match compilation error.
+`printInt（5.0）` 是一个有趣的案例，尽管 `printInt（int）` 是唯一未删除的函数，但删除的函数仍被视为函数重载解析中的候选函数。由于这些函数都不是明确的最佳匹配项，因此编译器将发出模棱两可的匹配编译错误。
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Key insight
+    </p>
+    <p style="margin: 1;">
+        <code>= delete</code> means “If try match this, then error”, not “Never try match this”.<br>
+        <code>= delete</code> 意味着 “如果尝试匹配这个，就报错”，而不是“不要尝试匹配这个”。
+    </p>
+</div>
+
+**Deleting all non-matching overloads**
+
+```cpp
+// This function will take precedence for arguments of type int
+void printInt(int x)
+{
+    std::cout << x << '\n';
+}
+
+// This function template will take precedence for arguments of other types
+// Since this function template is deleted, calls to it will halt compilation
+template <typename T>
+void printInt(T x) = delete;
+
+int main()
+{
+    printInt(97);   // okay
+    printInt('a');  // compile error (only int is (extra) matched)
+    printInt(true); // compile error (only int is (extra) matched)
+    return 0;
+}
+```
+
+## 11.5 — Default arguments
+
+```cpp
+void print(int x, int y=4) // 4 is the default argument
+{
+    std::cout << "x: " << x << '\n';
+    std::cout << "y: " << y << '\n';
+}
+
+int main()
+{
+    print(1, 2); // y will use user-supplied argument 2
+// x: 1
+// y: 2
+    print(3); // y will use default argument 4, as if we had called print(3, 4)
+// x: 3
+// y: 4
+    return 0;
+}
+```
+
+<div style="border: 2px solid #c1acff; background-color: #e7dfff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Rule
+    </p>
+    <p style="margin: 1;">
+        In a function call, any explicitly provided arguments must be the leftmost arguments.<br>
+        在函数调用中，任何显式提供的参数都必须是最左边的参数。
+    </p>
+    <p style="margin: 1;">
+        If a parameter is given a default argument, all subsequent parameters (to the right) must also be given default arguments.<br>
+        如果为参数指定了默认参数，则所有后续参数（右侧）也必须指定默认参数。
+    </p>
+</div>
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        If the function has a forward declaration (especially one in a header file), put the default argument there. Otherwise, put the default argument in the function definition.<br>
+        如果函数具有正向声明（尤其是头文件中的声明），请将默认参数放在那里。否则，请将默认参数放在函数定义中。
+	</p>
+</div>
+
+**Functions with default arguments can be overloaded**
+
+## 11.6 — Function templates
+
+- Type template parameters (where the template parameter represents a type).
+    类型模板参数（其中模板参数表示类型）。
+- Non-type template parameters (where the template parameter represents a constexpr value).
+    非类型模板参数（其中模板参数表示 constexpr 值）。
+- Template template parameters (where the template parameter represents a template).
+    模板模板参数（其中模板参数表示模板）。
+
+```cpp
+int max(int x, int y)
+{
+    return (x < y) ? y : x;
+    // Note: we use < instead of > because std::max uses <
+}
+double max(double x, double y)
+{
+    return (x < y) ? y: x;
+}
+```
+
+```cpp
+template <typename T> // this is the template parameter declaration defining T as a type template parameter
+T max(T x, T y) // this is the function template definition for max<T>
+{
+    return (x < y) ? y : x;
+}
+```
+
+## 11.7 — Function template instantiation
+
+```cpp
+template <typename T>
+T max(T x, T y)
+{
+    return (x < y) ? y : x;
+}
+
+int main()
+{
+    std::cout << max<int>(1, 2) << '\n'; // instantiates and calls function max<int>(int, int)
+    std::cout << max<>(1, 2) << '\n';  // deduce to max<int>(1, 2)
+	std::cout << max(1, 2) << '\n';  // deduce to max<int>(1, 2), also consider non-template function
+    return 0;
+}
+```
+
+
+
+```cpp
+template <typename T>
+T addOne(T x)
+{
+    return x + 1;
+}
+
+// Use function template specialization to tell the compiler that addOne(const char*) should emit a compilation error
+// const char* will match a string literal
+template <>
+const char* addOne(const char* x) = delete;
+```
+
+## 11.8 — Function templates with multiple template types
