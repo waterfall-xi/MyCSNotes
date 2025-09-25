@@ -4639,7 +4639,7 @@ Since C++ 14, functions return type can deduction with `auto`:
 auto add(int x, int y)
 {
     return x + y;
-}
+}`
 ```
 
 When using an `auto` return type, all return statements within the function must return values of the same type, otherwise an error will result.
@@ -4901,3 +4901,107 @@ const char* addOne(const char* x) = delete;
 ```
 
 ## 11.8 — Function templates with multiple template types
+
+```cpp
+template <typename T, typename U> // We're using two template type parameters named T and U
+T max(T x, U y) // x can resolve to type T, and y can resolve to type U
+{
+    return (x < y) ? y : x; // uh oh, we have a narrowing conversion problem here
+}
+
+    std::cout << max(2, 3.5) << '\n'; // resolves to max<int, double>
+```
+
+注意，auto 作为函数返回类型时，需要完整定义或者使用带返回类型声明的前向声明
+
+```cpp
+#include <type_traits> // for std::common_type_t
+
+template <typename T, typename U>
+auto max(T x, U y) -> std::common_type_t<T, U>; // returns the common type of T and U
+
+int main()
+{
+    std::cout << max(2, 3.5) << '\n';
+    return 0;
+}
+
+template <typename T, typename U>
+auto max(T x, U y) -> std::common_type_t<T, U>
+{
+    return (x < y) ? y : x;
+}
+```
+
+## 11.9 — Non-type template parameters
+
+```cpp
+template <int N> // declare a non-type template parameter of type int named N
+void print()
+{
+    std::cout << N << '\n'; // use value of N here
+}
+
+    print<5>(); // 5 is our non-type template argument
+```
+
+## 11.10 — Using function templates in multiple files
+
+main.cpp:
+
+```cpp
+#include <iostream>
+
+template <typename T>
+T addOne(T x); // function template forward declaration
+
+int main()
+{
+    std::cout << addOne(1) << '\n';
+    std::cout << addOne(2.3) << '\n';
+
+    return 0;
+}
+```
+
+add.cpp:
+
+```cpp
+template <typename T>
+T addOne(T x) // function template definition
+{
+    return x + 1;
+}
+```
+
+```
+1>Project6.obj : error LNK2019: unresolved external symbol "int __cdecl addOne<int>(int)" (??$addOne@H@@YAHH@Z) referenced in function _main
+1>Project6.obj : error LNK2019: unresolved external symbol "double __cdecl addOne<double>(double)" (??$addOne@N@@YANN@Z) referenced in function _main
+```
+
+
+
+```cpp
+#ifndef ADD_H
+#define ADD_H
+template <typename T>
+T addOne(T x) // function template definition
+{
+    return x + 1;
+}
+#endif
+```
+
+```cpp
+#include "add.h" // import the function template definition
+#include <iostream>
+
+int main()
+{
+    std::cout << addOne(1) << '\n';
+    std::cout << addOne(2.3) << '\n';
+    return 0;
+}
+```
+
+# 12 Compound Types: References and Pointers
