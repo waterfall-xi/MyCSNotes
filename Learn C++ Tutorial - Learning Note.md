@@ -5005,3 +5005,302 @@ int main()
 ```
 
 # 12 Compound Types: References and Pointers
+
+## 12.1 — Introduction to compound data types
+
+C++ supports the following compound types:
+
+- Functions 函数
+- C-style Arrays C 样式数组
+- Pointer types 指针类型:
+    - Pointer to object 指向对象的指针
+    - Pointer to function 指向函数的指针
+- Pointer to member types 指向成员类型的指针:
+    - Pointer to data member 指向数据成员的指针
+    - Pointer to member function 指向成员函数的指针
+- Reference types 引用类型:
+    - L-value references L 值参考
+    - R-value references R 值参考
+- Enumerated types 枚举类型:
+    - Unscoped enumerations 未作用域枚举
+    - Scoped enumerations 作用域枚举
+- Class types 类类型:
+    - Structs 结构体
+    - Classes 类
+    - Unions Unions 联合体
+
+## 12.2 — Value categories (lvalues and rvalues)
+
+### The type of an expression
+
+```cpp
+    auto v1 { 12 / 4 }; // int / int => int
+    auto v2 { 12.0 / 4 }; // double / int => double
+```
+
+### The value category of an expression
+
+Prior to C++ 11:
+
+- `lvalue`
+- `rvalue`
+
+In C++ 11:
+
+- `lvalue`
+- `rvalue`
+- `glvalue`
+- `prlvalue`
+- `xvalue`
+
+#### `lvalue`
+
+Expression that evaluates to an identifiable object or function (or bit-field).
+Can be accessed via an identifier, reference, or pointer.
+A longer lifetime.
+
+#### `rvalue`
+
+Expression that not an `lvalue`, evaluate to a value.
+Commonly literals (except C-style string literals), the return value of functions and operators that return by value.
+Not identifiable.
+Only exist within the scope of the expression used.
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Key insight
+    </p>
+    <p style="margin: 1;">
+        Lvalue expressions evaluate to an identifiable object.<br>
+        左值表达式的计算结果为可识别对象。
+    </p>
+    <p style="margin: 1;">
+        Rvalue expressions evaluate to a value.<br>
+        右值表达式的计算结果为一个值。
+    </p>
+</div>
+
+```cpp
+    int x{};
+	int y{1}
+    // Assignment requires the left operand to be a modifiable lvalue expression and the right operand to be an rvalue expression
+    x = 5; // valid: x is a modifiable lvalue expression and 5 is an rvalue expression
+    5 = x; // error: 5 is an rvalue expression and x is a modifiable lvalue expression
+	x = y; // y is not an rvalue, but this is legal (implicitly convert to an rvalue)
+```
+
+## 12.3 — Lvalue references
+
+An **lvalue reference** (commonly just called a “reference” since prior to C++11 there was only one type of reference) acts as an alias for an existing lvalue (such as a variable).
+**左值引用**（通常简称为“引用”，因为在 C++11 之前只有一种类型的引用）充当现有左值（例如变量）的别名。
+
+### Lvalue references types
+
+```cpp
+int&       // an lvalue reference to an int object
+double&    // an lvalue reference to a double object
+const int& // an lvalue reference to a const int object
+```
+
+### Reference initialization
+
+```cpp
+    int& invalidRef;   // error: references must be initialized
+
+    int x { 5 };
+    int& ref { x }; // okay: reference to int is bound to int variable
+
+    const int y { 5 };
+    int& invalidRef { y };  // invalid: non-const lvalue reference can't bind to a non-modifiable lvalue
+    int& invalidRef2 { 0 }; // invalid: non-const lvalue reference can't bind to an rvalue
+```
+
+Non-const lvalue references can only be bound to a *modifiable* lvalue.
+非常量左值引用只能绑定到*可修改*的左值。
+
+| Lvalue references type | Matched type | Un-matched type                        |
+| ---------------------- | ------------ | -------------------------------------- |
+| Non-const              | OK           | Error                                  |
+| const                  | OK           | OK, bind to temporary converted object |
+
+### References can’t be reseated (changed to refer to another object)
+
+```cpp
+    int x { 5 };
+    int y { 6 };
+    int& ref { x }; // ref is now an alias for x
+
+    ref = y; // assigns 6 (the value of y) to x (the object being referenced by ref)
+    // The above line does NOT change ref into a reference to variable y!
+```
+
+### Dangling references
+
+When an object being referenced is destroyed before a reference to it, the reference is called a **dangling reference**. Accessing a dangling reference leads to undefined behavior.
+当被引用的对象在引用之前被销毁时，这样的引用称为**悬空引用**。访问悬空引用会导致未定义的行为。
+
+## 12.4 — Lvalue references to const
+
+bind to const
+
+```cpp
+    const int x { 5 };    // x is a non-modifiable lvalue
+    const int& ref { x }; // okay: ref is a an lvalue reference to a const value
+
+    std::cout << ref << '\n'; // okay: we can access the const object
+    ref = 6;                  // error: we can not modify an object through a const reference
+```
+
+bind to non-const
+
+```cpp
+    int x { 5 };          // x is a modifiable lvalue
+    const int& ref { x }; // okay: we can bind a const reference to a modifiable lvalue
+
+    std::cout << ref << '\n'; // okay: we can access the object through our const reference
+    ref = 7;                  // error: we can not modify an object through a const reference
+    x = 6;                // okay: x is a modifiable lvalue, we can still modify it through the original identifier
+```
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Favor <code>const lvalue references</code> over <code>non-const lvalue references</code> unless you need to modify the object being referenced.<br>
+        除非你想要修改被引用的对象，优先<code>const lvalue references</code>而非<code>non-const lvalue references</code>.
+	</p>
+</div>
+
+bind to rvalue
+
+```cpp
+    const int& ref { 5 };  // okay: 5 is an rvalue
+	const std::string& str_ref = std::format("Value: {}", value);  // okay, but dangling, because there's a function return temporary object, only have function inner lifetime
+	const std::string& safe_ref = std::string("hello");  // okay, std::string("hello") is a temporary object from innitialization, the lifetime is extended
+```
+
+### Initializing a const lvalue reference with a different type
+
+Lvalue references to const can even bind to values of a different type, so long as those values can be implicitly converted to the reference type:
+对 const 的左值引用甚至可以绑定到不同类型的值，只要这些值可以隐式转换为引用类型：
+
+```cpp
+    // case 1
+    const double& r1 { 5 };  // temporary double initialized with value 5, r1 binds to temporary (const double)
+    std::cout << r1 << '\n'; // prints 5
+
+    // case 2
+    char c { 'a' };
+    const int& r2 { c };     // temporary int initialized with value 'a', r2 binds to temporary (const int)
+    std::cout << r2 << '\n'; // prints 97 (since r2 is a reference to int)
+```
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Key insight
+    </p>
+    <p style="margin: 1;">
+        If you try to bind a const lvalue reference to a value of a different type, the compiler will create a temporary object of the same type as the reference, initialize it using the value, and then bind the reference to the temporary.<br>
+        如果尝试将 const 左值引用绑定到不同类型的值，编译器将创建一个与引用类型相同的临时对象，使用该值初始化它，然后将引用绑定到临时对象。
+    </p>
+</div>
+
+<div style="border: 2px solid #d89696; background-color: #ffd6d6; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Warning
+    </p>
+    <p style="margin: 1;">
+        when a reference is bound to a temporary copy of the object or a temporary resulting from the conversion of the object, the object bound to is not that one look like!<br>
+        当引用绑定到对象的临时副本或对象转换产生的临时副本时，它绑定的对象并不是看起来像是的那一个！
+    </p>
+</div>
+
+When a const lvalue reference is *directly* bound to a temporary object, the lifetime of the temporary object is extended to match the lifetime of the reference.
+当常量左值引用*直接*绑定到临时对象时，临时对象的生存期将延长以匹配引用的生存期。
+
+Why sad *directly* ?
+
+The above example:
+
+```cpp
+	const std::string& str_ref = std::format("Value: {}", value);  // okay, but dangling, because there's a function return temporary object, only have function inner lifetime
+	const std::string& safe_ref = std::string("hello");  // okay, std::string("hello") is a temporary object from innitialization, the lifetime is extended
+```
+
+## 12.5 — Pass by lvalue reference
+
+### avoid copy cost
+
+```cpp
+void printValue(std::string y)
+{
+    std::cout << y << '\n';
+} // y is destroyed here
+
+int main()
+{
+    std::string x { "Hello, world!" }; // x is a std::string
+    printValue(x); // x is passed by value (copied) into parameter y (expensive)
+    return 0;
+}
+```
+
+### allows change the value of an argument
+
+```cpp
+void addOne(int& y) // y is bound to the actual object x
+{
+    ++y; // this modifies the actual object x
+}
+
+int main()
+{
+    int x { 5 };
+    std::cout << "value = " << x << '\n';
+    addOne(x);
+    std::cout << "value = " << x << '\n'; // x has been modified
+    return 0;
+}
+```
+
+## 12.6 — Pass by const lvalue reference
+
+Advantage:
+
+- No copy cost
+- Can bind more type (by convert)
+- Do not modify the value of arguments (Most of the time this is exactly the case)
+
+How to choose?
+
+- Fundamental types and enumerated types are cheap to copy, so they are typically passed by value.
+    基本类型和枚举类型的复制成本较低，因此它们通常按值传递。
+- Class types can be expensive to copy (sometimes significantly so), so they are typically passed by const reference.
+    类类型的复制成本可能很高（有时非常昂贵），因此它们通常通过 const 引用传递。
+
+
+
+The following are often passed by value (because it is more efficient):
+以下内容通常按值传递（因为它效率更高）：
+
+- Enumerated types (unscoped and scoped enumerations).
+    枚举类型（无作用域和作用域枚举）。
+- Views and spans (e.g. `std::string_view`, `std::span`).
+    视图和跨度（例如 `std::string_view` ， `std::span` ）。
+- Types that mimic references or (non-owning) pointers (e.g. iterators, `std::reference_wrapper`).
+    模仿引用或（非拥有）指针的类型（例如迭代器、 `std::reference_wrapper` ）。
+- Cheap-to-copy class types that have value semantics (e.g. `std::pair` with elements of fundamental types, `std::optional`, `std::expected`).
+    具有值语义的廉价复制类类型（例如 `std::pair`具有基本类型的元素， `std::optional` ， `std::expected` ）。
+
+Pass by reference should be used for the following:
+按引用传递应用于以下情况：
+
+- Arguments that need to be modified by the function.
+    需要由函数修改的参数。
+- Types that aren’t copyable (such as `std::ostream`).
+    不可复制的类型（例如 `std::ostream` ）。
+- Types where copying has ownership implications that we want to avoid (e.g. `std::unique_ptr`, `std::shared_ptr`).
+    复制具有我们想要避免的所有权影响的类型（例如 `std::unique_ptr` ， `std::shared_ptr` ）。
+- Types that have virtual functions or are likely to be inherited from (due to object slicing concerns, covered in lesson [25.9 -- Object slicing](https://www.learncpp.com/cpp-tutorial/object-slicing/)).
+    具有虚拟函数或可能继承自的类型（由于对象切片问题，在第 [25.9 课 -- 对象切片](https://www.learncpp.com/cpp-tutorial/object-slicing/)中介绍）。
