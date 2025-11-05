@@ -5215,7 +5215,6 @@ Lvalue references to const can even bind to values of a different type, so long 
         当引用绑定到对象的临时副本或对象转换产生的临时副本时，它绑定的对象并不是看起来像是的那一个！
     </p>
 </div>
-
 When a const lvalue reference is *directly* bound to a temporary object, the lifetime of the temporary object is extended to match the lifetime of the reference.
 当常量左值引用*直接*绑定到临时对象时，临时对象的生存期将延长以匹配引用的生存期。
 
@@ -5304,3 +5303,221 @@ Pass by reference should be used for the following:
     复制具有我们想要避免的所有权影响的类型（例如 `std::unique_ptr` ， `std::shared_ptr` ）。
 - Types that have virtual functions or are likely to be inherited from (due to object slicing concerns, covered in lesson [25.9 -- Object slicing](https://www.learncpp.com/cpp-tutorial/object-slicing/)).
     具有虚拟函数或可能继承自的类型（由于对象切片问题，在第 [25.9 课 -- 对象切片](https://www.learncpp.com/cpp-tutorial/object-slicing/)中介绍）。
+
+## 12.7 — Introduction to pointers
+
+```
+char x {}; // chars use 1 byte of memory
+```
+
+When the code generated for this definition is executed, a piece of memory from RAM will be assigned to this object. For example, let’s say that the `x` is assigned memory address `140`. Whenever we use variable `x` in an expression or statement, the program will go to memory address `140` to access the value stored there.
+简化一点，当执行为此定义生成的代码时，RAM 中的一段内存将分配给此对象。举例，假设`x`被分配了内存地址 `140` 。每当我们在表达式或语句`x`中使用变量时，程序都会转到内存地址`140`以访问存储在那里的值。
+
+### The address-of operator (&) 取址运算符
+
+```cpp
+    int x{ 5 };
+    std::cout << x << '\n';  // print the value of variable x
+    std::cout << &x << '\n'; // print the memory address of variable x
+```
+
+```
+5
+0027FEA0
+```
+
+For objects that use more than one byte of memory, address-of will return the memory address of the first byte used by the object.
+对于使用多个字节内存的对象，address-of 将返回对象使用的第一个字节的内存地址。
+
+The address-of operator (&) doesn’t return the address of its operand as a literal (as C++ doesn’t support address literals). Instead, it returns a pointer to the operand (whose value is the address of the operand).
+
+取址运算符 （&） 不会将其操作数的地址作为字面值返回（因为 C++ 不支持地址字面值）。而是返回指向操作数的指针（其值是操作数的地址）。
+
+```cpp
+	int x{ 4 };
+	std::cout << typeid(x).name() << '\n';  // print the type of x
+	std::cout << typeid(&x).name() << '\n'; // print the type of &x
+```
+
+```
+i
+Pi
+```
+
+### The dereference operator (\*) 解引用运算符
+
+```cpp
+    int x{ 5 };
+    std::cout << x << '\n';  // print the value of variable x
+    std::cout << &x << '\n'; // print the memory address of variable x
+    std::cout << *(&x) << '\n'; // print the value at the memory address of variable x (parentheses not required, but make it easier to read)
+```
+
+```
+5
+0027FEA0
+5
+```
+
+### Pointers
+
+A **pointer** is an object that holds a *memory address* (typically of another variable) as its value.
+**指针**是一个对象，它保存*一个内存地址*（通常是另一个变量的地址）作为其值。
+
+```cpp
+int;  // a normal int
+int&; // an lvalue reference to an int value
+int*; // a pointer to an int value (holds the address of an integer value)
+```
+
+<div style="border: 2px solid #d89696; background-color: #ffd6d6; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Warning
+    </p>
+    <p style="margin: 1;">
+        Although you generally should not declare multiple variables on a single line, if you do, the asterisk has to be included with each variable.<br>
+        尽管通常不应在单行声明多个变量，但如果这样做，则必须在每个变量中包含星号。
+    </p>
+</div>
+
+```cpp
+int* ptr1, ptr2;   // incorrect: ptr1 is a pointer to an int, but ptr2 is just a plain int!
+int* ptr3, * ptr4; // correct: ptr3 and ptr4 are both pointers to an int
+```
+
+#### Pointer initialization
+
+```cpp
+    int x{ 5 };
+
+    int* ptr;        // an uninitialized pointer (holds a garbage address)
+    int* ptr2{};     // a null pointer (we'll discuss these in the next lesson)
+    int* ptr3{ &x }; // a pointer initialized with the address of variable x
+```
+
+Like normal variables, pointers are *not* initialized by default and become a **wild pointer**. Dereferencing a wild pointer will result in undefined behavior. Because of this, you should always initialize your pointers to a known value.
+与普通变量一样，默认情况下*不*初始化指针然后变成一个**野生指针**。解引用野指针将导致未定义的行为。因此，应始终初始化指针指向已知值。
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Always initialize your pointers.<br>
+        始终初始化指针。
+	</p>
+</div>
+
+Much like the type of a reference has to match the type of object being referred to, the type of the pointer has to match the type of the object being pointed to. And initializing a pointer with a literal value is disallowed.
+就像引用的类型必须与所引用的对象的类型匹配一样，指针的类型必须与所指向的对象的类型匹配。此外用字面值来初始化一个指针是不允许的。
+
+```cpp
+    int i{ 5 };
+    double d{ 7.0 };
+
+    int* iPtr{ &i };     // ok: a pointer to an int can point to an int object
+    // int* iPtr2 { &d };   // not okay: a pointer to an int can't point to a double object
+    double* dPtr{ &d };  // ok: a pointer to a double can point to a double object
+    // double* dPtr2{ &i }; // not okay: a pointer to a double can't point to an int object
+    // int* ptr1{ 5 }; // not okay
+    // int* ptr2{ 0x0012FF7C }; // not okay, 0x0012FF7C is treated as an integer literal
+```
+
+#### Use of pointers
+
+1. To change what the pointer is pointing at (by assigning the pointer a new address)
+    更改指针指向的内容（通过为指针分配新地址）
+2. To change the value being pointed at (by assigning the dereferenced pointer a new value)
+    更改指向的值（通过为指针的解引用分配一个新值）
+
+#### The size of pointers
+
+Dependent upon the architecture the executable is compiled for: 32 bits or 64 bits.
+指针的大小取决于编译可执行文件的体系结构：32 位或 64 位
+
+### pointers vs references
+
+**Similarities**
+
+provide a way to indirectly access another object
+
+**Differences**
+
+- Pointers need the address-of operator and dereference operator for use, references don't.
+    指针需要配合取址运算符和解引用运算符来使用，引用则不需要。
+
+- References must be initialized, pointers are not required to be initialized (but should be).
+    引用必须初始化，指针不需要初始化（但应该初始化）。
+- References are not objects, pointers are.
+    引用不是对象，指针是对象。
+- References can not be reseated (changed to reference something else), pointers can change what they are pointing at.
+    引用不能重新定位（更改为引用其他内容），指针可以更改它们所指向的内容。
+- References must always be bound to an object, pointers can point to nullptr (we’ll see an example of this in the next lesson).
+    引用必须始终绑定到一个对象，指针可以指向 nullptr（我们将在下一课中看到一个示例）。
+- References are “safe” (outside of dangling references), pointers are inherently dangerous (we’ll also discuss this in the next lesson).
+    引用是“安全的”（在悬空的引用之外），指针本质上是危险的（我们还将在下一课中讨论这个问题）。
+
+#### Dangling pointers
+
+A **dangling pointer** is a pointer that is holding the address of an object that is no longer valid (e.g. because it has been destroyed).
+**悬空指针**是保存不再有效的对象地址的指针（例如，因为它已被销毁）。
+
+Dereferencing a dangling pointer will lead to undefined behavior (May program crash).
+取消引用悬空指针将导致未定义的行为（可能导致程序崩溃）。
+
+## 12.8 — Null pointers
+
+A pointer can hold a null value. A **null value** (often shortened to **null**) is a special value that means something has no value. When a pointer is holding a null value, it is called a **null pointer**.
+指针可以保存一个空值。**空值**（通常缩写为 **null**）是一个特殊值，表示某物没有价值。当指针持有空值时，称为**空指针**。
+
+```cpp
+    int* ptr {}; // ptr is now a null pointer, and is not holding an address
+    return 0;
+```
+
+### nullptr
+
+```cpp
+    int* ptr { nullptr }; // can use nullptr to initialize a pointer to be a null pointer
+
+    int value { 5 };
+    int* ptr2 { &value }; // ptr2 is a valid pointer
+    ptr2 = nullptr; // Can assign nullptr to make the pointer a null pointer
+
+    someFunction(nullptr); // we can also pass nullptr to a function that has a pointer parameter
+```
+
+<div style="border: 2px solid #d89696; background-color: #ffd6d6; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Warning
+    </p>
+    <p style="margin: 1;">
+        Extra careful that your code isn’t dereferencing null or dangling pointers, as this will cause undefined behavior (probably an application crash).<br>
+        格外小心确保代码不会解引用 null 或悬空指针，因为这会导致未定义的行为（可能是应用程序崩溃）。
+    </p>
+</div>
+
+**Checking for null pointers**
+
+```cpp
+    int x { 5 };
+    int* ptr { &x };
+    if (ptr == nullptr) // explicit test for equivalence
+        std::cout << "ptr is null\n";
+    else
+        std::cout << "ptr is non-null\n";
+    int* nullPtr {};
+    std::cout << "nullPtr is " << (nullPtr==nullptr ? "null\n" : "non-null\n"); // explicit test for equivalence
+```
+
+<div style="border: 2px solid #d89696; background-color: #ffd6d6; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Warning
+    </p>
+    <p style="margin: 1;">
+        Conditionals can only be used to differentiate null pointers from non-null pointers. There is no convenient way to determine whether a non-null pointer is pointing to a valid object or dangling (pointing to an invalid object).<br>
+		条件只能用于区分空指针和非空指针。没有方便的方法来确定非空指针是指向有效对象还是悬空（指向无效对象）。
+    </p>
+</div>
+
+## 12.9 — Pointers and const
