@@ -5521,3 +5521,64 @@ A pointer can hold a null value. A **null value** (often shortened to **null**) 
 </div>
 
 ## 12.9 — Pointers and const
+
+```cpp
+// normal pointer
+int x {5};
+int y {9};
+int* ptr {&x};  // ok
+ptr = &y;  // ok
+*ptr = 7;  // ok
+
+const int c {5};
+int* ptr {&c};  // compile error: invalid conversion from 'const int*' to 'int*'
+
+// pointer to const
+int x {5};
+int y {9};
+const int* ptr {&x};  // ok
+int const* ptr2 {&x};  // ok, same to above
+ptr = &y;  // ok
+*ptr = 7;  // compile error: assignment of read-only location '*ptr'
+
+const int c {5};
+int x {6};
+const int* ptr {&c};  // ok
+ptr = &x;  // ok
+*ptr = 1;  // compile error: assignment of read-only location '*ptr'
+
+// const pointer
+int x {5};
+int y {9};
+int* const ptr {&x};  // ok
+ptr = &y;  // compile error: assignment of read-only location '*ptr'
+*ptr = 7;  // ok
+
+const int c {5};
+int* const ptr {&c};  // compile error: invalid conversion from 'const int*' to 'int*'
+
+// const pointer to const
+int x {5};
+int y {9};
+const int* const ptr {&x};  // ok
+ptr = &y;  // compile error: assignment of read-only location 'ptr'
+*ptr = 7;  // compile error: assignment of read-only location '*(const int*)ptr'
+
+const int c {5};
+int x {6};
+const int* const ptr {&x};  // ok
+ptr = &x;  // compile error: assignment of read-only location 'ptr'
+*ptr = 1;  // compile error: assignment of read-only location '*(const int*)ptr'
+```
+
+指针（星号）前面加 const ，代表指针指向的对象是常量，不能解引用写入值；
+指针（星号）后面加 const ，代表指针本身是常量，不能写入指向的地址；
+
+| pointer                | example                              | point to const obj | change assigned address | change the value point to |
+| ---------------------- | ------------------------------------ | ------------------ | ----------------------- | ------------------------- |
+| normal pointer         | `int* ptr`                           | no                 | yes                     | yes                       |
+| pointer to const       | `int const* ptr` or `const int* ptr` | yes                | yes                     | no                        |
+| const pointer          | `int* const ptr`                     | no                 | no                      | yes                       |
+| const pointer to const | `const int* const ptr`               | yes                | no                      | no                        |
+
+# 12.10 — Pass by address
