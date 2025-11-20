@@ -5581,4 +5581,59 @@ ptr = &x;  // compile error: assignment of read-only location 'ptr'
 | const pointer          | `int* const ptr`                     | no                 | no                      | yes                       |
 | const pointer to const | `const int* const ptr`               | yes                | no                      | no                        |
 
-# 12.10 — Pass by address
+## 12.10 — Pass by address (part 1)
+
+```cpp
+void printByValue(std::string val) // The function parameter is a copy of str
+{
+    std::cout << val << '\n'; // print the value via the copy
+}
+
+void printByReference(const std::string& ref) // The function parameter is a reference that binds to str
+{
+    std::cout << ref << '\n'; // print the value via the reference
+}
+
+void printByAddress(const std::string* ptr) // The function parameter is a pointer that holds the address of str
+{
+    std::cout << *ptr << '\n'; // print the value via the dereferenced pointer
+}
+
+int main()
+{
+    std::string str{ "Hello, world!" };
+    printByValue(str); // pass str by value, makes a copy of str
+    printByReference(str); // pass str by reference, does not make a copy of str
+    printByAddress(&str); // pass str by address, does not make a copy of str
+
+    return 0;
+}
+```
+
+```cpp
+void func(int* const ptr);  // no value, the caller doesn't care if ptr's value (the address it points to) has changed
+void func(const int* ptr);  // useful, the caller know whether the function could change the value of the argument
+```
+
+### Please always make Null checking
+
+```cpp
+void print(int* ptr)
+{
+    if (!ptr) // if ptr is a null pointer, early return back to the caller
+        return;
+    std::cout << *ptr << '\n';
+}
+```
+
+### Prefer pass by (const) reference
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Prefer pass by reference to pass by address unless you have a specific reason to use pass by address.<br>
+        除非你有特别的理由，否则建议通过引用传参而不是通过指针传参。
+	</p>
+</div>
