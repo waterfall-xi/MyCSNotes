@@ -5637,3 +5637,135 @@ void print(int* ptr)
         除非你有特别的理由，否则建议通过引用传参而不是通过指针传参。
 	</p>
 </div>
+
+## 12.11 — Pass by address (part 2)
+
+### `0`, `NULL`, `nullptr`
+
+|         | essence                                             | suggested |
+| ------- | --------------------------------------------------- | --------- |
+| 0       | integer literal / null pointer literal              | ❎         |
+| NULL    | `0`, `0L`, `((void*)0)`, or something else entirely | ❎         |
+| nullptr | just nullptr (std::nullptr_t literal)               | ✅         |
+
+## 12.12 — Return by reference and return by address
+
+### return static object by reference
+
+```cpp
+const std::string& getProgramName() // returns a const reference
+{
+    static const std::string s_programName { "Calculator" }; // has static duration, destroyed at end of program
+    return s_programName;
+}
+```
+
+**The object being returned by reference must exist after the function returns**
+
+```cpp
+const std::string& getProgramName()
+{
+    const std::string programName { "Calculator" }; // now a non-static local variable, destroyed when function ends
+    return programName;
+}
+
+int main()
+{
+    std::cout << "This program is " << getProgramName() << '\n'; // undefined behavior, dangling reference
+    std::string name { getProgramName() }; // makes a copy of a dangling reference
+    std::cout << "This program is " << name << '\n'; // undefined behavior
+    return 0;
+}
+```
+
+```cpp
+const int& returnByConstReference()
+{
+    return 5; // returns const reference to temporary object
+}
+
+int main()
+{
+    const int& ref { returnByConstReference() };
+    std::cout << ref; // undefined behavior, ref is now dangling
+    return 0;
+}
+```
+
+
+
+```cpp
+const int& getNextId()
+{
+    static int s_x{ 0 }; // note: variable is non-const
+    ++s_x; // generate the next id
+    return s_x; // and return a reference to it
+}
+
+int main()
+{
+    const int& id1 { getNextId() }; // id1 is a reference
+    const int& id2 { getNextId() }; // id2 is a reference
+    std::cout << id1 << '\n';
+    std::cout << id2 << '\n';
+    return 0;
+}
+```
+
+```
+2
+2
+```
+
+```cpp
+int main()
+{
+    const int id1 { getNextId() }; // id1 is a normal variable now and receives a copy of the value returned by reference from getNextId()
+    const int id2 { getNextId() }; // id2 is a normal variable now and receives a copy of the value returned by reference from getNextId()
+    std::cout << id1 << '\n';
+    std::cout << id2 << '\n';
+    return 0;
+}
+```
+
+```
+1
+2
+```
+
+### return reference parameters by reference (OK)
+
+```cpp
+const std::string& firstAlphabetical(const std::string& a, const std::string& b)
+{
+	return (a < b) ? a : b; // We can use operator< on std::string to determine which comes first alphabetically
+}
+
+int main()
+{
+	std::string hello { "Hello" };
+	std::string world { "World" };
+	std::cout << firstAlphabetical(hello, world) << '\n';
+	return 0;
+}
+```
+
+```
+Hello
+```
+
+### Return by address
+
+Advantage: can return `nullptr` to indicate there is no valid object to return
+
+Disadvantage: the caller must make a `nullptr` check
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Prefer return by reference over return by address unless the ability to return “no object” (using <code>nullptr</code>) is important.<br>
+        除非需要返回“无对象”（使用nullptr）的功能，否则优先采用返回引用而非返回地址。
+	</p>
+</div>
