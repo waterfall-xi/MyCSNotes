@@ -631,7 +631,6 @@ int main()
     <p style="margin: 1;">For example, if you run the above program in a Visual Studio debug configuration, it will consistently print -858993460, because that’s the value (interpreted as an integer) that Visual Studio initializes memory with in debug configurations.<br>
 	例如，如果在 Visual Studio 调试配置中运行上述程序，它将始终打印 -858993460，因为这是 Visual Studio 在调试配置中初始化内存时使用的值（解释为整数）。</p>
 </div>
-
 Using uninitialized variables is one of the most common mistakes that novice programmers make, and unfortunately, it can also be one of the most challenging to debug (because the program may run fine anyway if the uninitialized variable happened to get assigned to a spot of memory that had a reasonable value in it, like 0). This is the primary reason for the “always initialize your variables” best practice.
 使用未初始化的变量是新手程序员最常犯的错误之一，不幸的是，它也可能是最具挑战性的调试错误之一（因为如果未初始化的变量碰巧被分配到具有合理值的内存点，例如 0），程序无论如何都可能运行良好。这是 “always initialize your variables” 最佳实践的主要原因。
 
@@ -654,15 +653,21 @@ A too long strong... Only a portion of the content is captured.
 
 #### variable names
 
+`userName` `usbConfig`
+
 - Begin with a lowercase letter.
 - See acronym to all lowercase word.
 
 #### function names
 
+`setMode` `openLed`
+
 - Begin with a lowercase letter.
 - See acronym to all lowercase word.
 
 #### structs, class, and enumerations names
+
+`UserInfo` `UsbConfig`
 
 - Begin with a capital letter.
 - See acronym to all lowercase word.
@@ -681,7 +686,7 @@ A too long strong... Only a portion of the content is captured.
 ### Style guides
 
 A **style guide** is a concise, opinionated document containing (sometimes arbitrary) programming conventions, formatting guidelines, and best practices. The goal of a style guide is to ensure that all developers on a project are programming in a consistent manner.
-Astyle guide 是一个简洁、有主见的文档，包含（有时是任意的）编程约定、格式指南和最佳实践。样式指南的目标是确保项目中的所有开发人员都以一致的方式进行编程。
+style guide 是一个简洁、有主见的文档，包含（有时是任意的）编程约定、格式指南和最佳实践。样式指南的目标是确保项目中的所有开发人员都以一致的方式进行编程。
 
 Some commonly referenced C++ style guides include:
 一些常用的 C++ 样式指南包括：
@@ -849,7 +854,7 @@ In certain cases, you will encounter functions that have parameters that are not
 在某些情况下，您会遇到具有函数体中未使用的参数的函数。这些参数称为 unreferenced 参数。
 
 In a function definition, the name of a function parameter is optional. Therefore, in cases where a function parameter needs to exist but is not used in the body of the function, you can simply omit the name. A parameter without a name is called an **unnamed parameter**.
-在函数定义中，函数参数的名称是可选的。因此，如果函数参数需要存在但未在函数主体中使用，则只需省略该名称即可。没有名称的参数称为 anunnamed 参数。
+在函数定义中，函数参数的名称是可选的。因此，如果函数参数需要存在但未在函数主体中使用，则只需省略该名称即可。没有名称的参数称为 unnamed 参数。
 
 <div style="border: 2px solid #c7c7c7; background-color: #f4f4f4; border-radius: 8px; padding: 14px; margin: 5px">
     <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
@@ -1028,7 +1033,7 @@ int add(int x, int y)
     </p>
     <p style="margin: 1;">
         Because the compiler compiles each code file individually (and then forgets what it has seen), each code file that uses <code>std::cout</code> or <code>std::cin</code> needs to <code>#include &lt;iostream&gt;</code>.<br>
-        因为编译器单独编译每个代码文件（然后忘记了它所看到的内容），所以每个使用 std：：coutorstd：：cin 的代码文件都需要 #include 。
+        因为编译器单独编译每个代码文件（然后忘记了它所看到的内容），所以每个使用 <code>std::cout</code> 或 <code>std::cin</code> 的代码文件都需要 <code>#include &lt;iostream&gt;</code>
     </p>
 </div>
 
@@ -1041,7 +1046,7 @@ int add(int x, int y)
     </p>
     <p style="margin: 1;">
         If the compiler has seen neither a forward declaration nor a definition for the identifier in the file being compiled, it will error at the point where the identifier is used.<br>
-        如果编译器在正在编译的文件中既没有看到 forward 声明，也没有看到 identifier 的定义，它将在使用该 identifier 时出错。
+        如果编译器在正在编译的文件中既没有看到前向声明，也没有看到标识符的定义，它将在使用该 identifier 时出错。
     </p>
     <p style="margin: 1;">
         Otherwise, if a definition exists in the same file, the compiler will connect the use of the identifier to its definition.<br>
@@ -1053,9 +1058,10 @@ int add(int x, int y)
     </p>
     <p style="margin: 1;">
         Otherwise (the compiler has seen a forward but no definition exists in any other file), the linker will issue an error indicating that it couldn’t find a definition for the identifier.<br>
-        否则（编译器看到 forward 声明但是在其他任何文件都没有定义存在），链接器将发出一个错误，指示它找不到标识符的定义。
+        否则（编译器看到qian声明但是在其他任何文件都没有定义存在），链接器将发出一个错误，指示它找不到标识符的定义。
     </p>
 </div>
+
 
 ## 2.9 — Naming collisions and an introduction to namespaces
 
@@ -1128,7 +1134,7 @@ If another cout is defined in the global namespace, the naming conflict will hap
 
 ### Preprocessor directives 预处理器指令
 
-**Preprocessor directives** (often just called *directives*) are instructions that start with a `#` symbol and end with a newline (NOT a semicolon). 预处理器指令（通常简称为指令）是以 a#symbol 开头并以换行符（不是分号）结尾的指令。
+**Preprocessor directives** (often just called *directives*) are instructions that start with a `#` symbol and end with a newline (NOT a semicolon). 预处理器指令（通常简称为指令）是以 # 符号开头并以换行符（不是分号）结尾的指令。
 
 #### #include
 
@@ -2971,9 +2977,9 @@ Prefer namespace names starting with a capital letter
 
 **Using the scope resolution operator with no name prefix**
 
-`UserNameSpace::doSomething` vs `::doSomething`
+`UserNameSpace::print` vs `::print`
 
-`::doSomething`=>`globalNamespace::doSomething`
+`::print`=>`globalNamespace::print`
 
 ```cpp
 #include <iostream>
@@ -3001,9 +3007,9 @@ int main()
 
 **Identifier resolution from within a namespace**
 
-`doSomething` vs `::doSomething`
+`print` vs `::print`
 
-`doSomething`=>`currentNamespcae::doSomething` no found =>`previousNamespcae::doSomething`=>`globalNamespace::doSomething`
+`print`=>`currentNamespcae::print` no found =>`previousNamespcae::print`=>`globalNamespace::print`
 
 ```cpp
 #include <iostream>
@@ -5767,5 +5773,58 @@ Disadvantage: the caller must make a `nullptr` check
     <p style="margin: 1;">
         Prefer return by reference over return by address unless the ability to return “no object” (using <code>nullptr</code>) is important.<br>
         除非需要返回“无对象”（使用nullptr）的功能，否则优先采用返回引用而非返回地址。
+	</p>
+</div>
+
+# 12.13 — In and out parameters
+
+```cpp
+// sinOut and cosOut are out parameters
+void getSinCos(double degrees, double& sinOut, double& cosOut)
+{
+    constexpr double pi { 3.14159265358979323846 }; // the value of pi
+    double radians = degrees * pi / 180.0;
+    sinOut = std::sin(radians);
+    cosOut = std::cos(radians);
+}
+
+int main()
+{
+    double sin { 0.0 };
+    double cos { 0.0 };
+    double degrees{};
+    std::cout << "Enter the number of degrees: ";
+    std::cin >> degrees;
+    getSinCos(degrees, sin, cos);
+
+    return 0;
+}
+```
+
+The suffix “out” denote that they’re out parameters. By convention, output parameters are typically the rightmost parameters.
+后缀“out”表示它们是输出参数。按照惯例，输出参数通常是最右边的参数。
+
+**Disadvantage**
+
+The caller must instantiate (and initialize) objects and pass them as arguments, even if it doesn’t intend to use them.
+调用者必须实例化（并初始化）对象并将其作为参数传递，即使调用者不打算使用这些参数。
+
+These objects must be able to be assigned to, which means they can’t be made const.
+这些对象必须能够被分配到，这意味着它们不能被设置成 const。
+
+Because the caller must pass in objects, these values can’t be used as temporaries, or easily used in a single expression.
+由于调用者必须传递对象，这些值不能作为临时值使用，也不能轻易在单一表达式中使用。
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Avoid out-parameters (except in the rare case where no better options exist).<br>
+        避免出出参数（除非极少数情况下没有更好的选择）。
+	</p>
+    <p style="margin: 1;">
+        Prefer pass by reference for non-optional out-parameters.<br>
+        对于非可选的出参数，优先采用引用传递。
 	</p>
 </div>
