@@ -5848,3 +5848,53 @@ Because the caller must pass in objects, these values can’t be used as tempora
         对于非可选的出参数，优先采用引用传递。
 	</p>
 </div>
+## 12.14 — Type deduction with pointers, references, and const
+
+### Type deduction drops const / constexpr
+
+```cpp
+    const double a { 7.8 }; // a has type const double
+    auto b { a };           // b has type double (const dropped)
+    const auto b { a };  // b has type const double (const applied)
+
+    constexpr double c { 7.8 }; // c has type const double (constexpr implicitly applies const)
+    auto d { c };               // d has type double (const dropped)
+    const auto d { c };         // d is const double (const dropped, const reapplied)
+    constexpr auto e { c };     // e is constexpr double (const dropped, constexpr reapplied)
+```
+
+**Drop top-level const / constexpr only**
+
+### Type deduction drops references
+
+```cpp
+std::string& getRef(); // some function that returns a reference
+const std::string& getConstRef(); // some function that returns a reference to const
+
+int main()
+{
+    auto ref1 { getRef() };  // std::string (reference dropped)
+    auto& ref2 { getRef() }; // std::string& (reference dropped, reference reapplied)
+    
+    auto ref3{ getConstRef() }; // std::string (reference dropped, then top-level const dropped from result)
+    const auto ref4{ getConstRef() };  // const std::string (reference dropped, const dropped, const reapplied)
+    auto& ref5{ getConstRef() };       // const std::string& (reference dropped and reapplied, low-level const not dropped)
+    const auto& ref6{ getConstRef() }; // const std::string& (reference dropped and reapplied, low-level const not dropped)
+
+    return 0;
+}
+```
+
+| type             | auto | auto& | const auto | constexpr auto | const auto& |
+| ---------------- | ---- | ----- | ---------- | -------------- | ----------- |
+| const int        |      |       |            |                |             |
+| constexpr int    |      |       |            |                |             |
+| int* const       |      |       |            |                |             |
+| const int*       |      |       |            |                |             |
+| const int* const |      |       |            |                |             |
+| const int&       | int  |       |            |                |             |
+
+
+
+### Reapply a reference and/or const while type deduction
+
