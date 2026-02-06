@@ -5059,13 +5059,13 @@ In C++ 11:
 - `prlvalue`
 - `xvalue`
 
-#### `lvalue`
+#### lvalue
 
 Expression that evaluates to an identifiable object or function (or bit-field).
 Can be accessed via an identifier, reference, or pointer.
 A longer lifetime.
 
-#### `rvalue`
+#### rvalue
 
 Expression that not an `lvalue`, evaluate to a value.
 Commonly literals (except C-style string literals), the return value of functions and operators that return by value.
@@ -5119,6 +5119,8 @@ const int& // an lvalue reference to a const int object
     const int y { 5 };
     int& invalidRef { y };  // invalid: non-const lvalue reference can't bind to a non-modifiable lvalue
     int& invalidRef2 { 0 }; // invalid: non-const lvalue reference can't bind to an rvalue
+	unsigned int z {10};
+	int& invalidRef3 { z }; // invalid: non-const lvalue reference can't bind to a un-matched type (implicit convert to an rvalue)
 ```
 
 Non-const lvalue references can only be bound to a *modifiable* lvalue.
@@ -5126,7 +5128,7 @@ Non-const lvalue references can only be bound to a *modifiable* lvalue.
 
 | Lvalue references type | Matched type | Un-matched type                        |
 | ---------------------- | ------------ | -------------------------------------- |
-| Non-const              | OK           | Error                                  |
+| Non-const              | OK           | Error, implicit convert to an rvalue   |
 | const                  | OK           | OK, bind to temporary converted object |
 
 ### References can’t be reseated (changed to refer to another object)
@@ -5233,6 +5235,12 @@ The above example:
 	const std::string& safe_ref = std::string("hello");  // okay, std::string("hello") is a temporary object from innitialization, the lifetime is extended
 ```
 
+So what is the indirect case?
+
+- implicit convert
+- return from function
+- object member
+
 ## 12.5 — Pass by lvalue reference
 
 ### avoid copy cost
@@ -5310,6 +5318,18 @@ Pass by reference should be used for the following:
 - Types that have virtual functions or are likely to be inherited from (due to object slicing concerns, covered in lesson [25.9 -- Object slicing](https://www.learncpp.com/cpp-tutorial/object-slicing/)).
     具有虚拟函数或可能继承自的类型（由于对象切片问题，在第 [25.9 课 -- 对象切片](https://www.learncpp.com/cpp-tutorial/object-slicing/)中介绍）。
 
+| Feature                             | No-const Lvalue reference                                    | Const Lvalue reference                                       |
+| ----------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| must be initialized                 | yes                                                          | yes                                                          |
+| rebind                              | no                                                           | no                                                           |
+| assign object bind                  | yes                                                          | no                                                           |
+| bind to rvalue                      | Error                                                        | OK                                                           |
+| bind to const lvalue                | Error                                                        | OK                                                           |
+| bing to un-matched type             | Error                                                        | OK<br />bing to temporary converted object<br />but unadvisable |
+| bing to temporary object directly   | Error (bind to rvalue)                                       | OK                                                           |
+| bing to temporary object indirectly | Error (bind to rvalue)                                       | OK, but *dangling!*                                          |
+| Use cases<br />(Avoid all others)   | function out/in-out parameter<br />output in operator overloading<br />write elements in range for | function in parameter<br />operand input in operator overloading<br />read-only elements in range for |
+
 ## 12.7 — Introduction to pointers
 
 ```
@@ -5317,7 +5337,7 @@ char x {}; // chars use 1 byte of memory
 ```
 
 When the code generated for this definition is executed, a piece of memory from RAM will be assigned to this object. For example, let’s say that the `x` is assigned memory address `140`. Whenever we use variable `x` in an expression or statement, the program will go to memory address `140` to access the value stored there.
-简化一点，当执行为此定义生成的代码时，RAM 中的一段内存将分配给此对象。举例，假设`x`被分配了内存地址 `140` 。每当我们在表达式或语句`x`中使用变量时，程序都会转到内存地址`140`以访问存储在那里的值。
+当执行为此定义生成的代码时，RAM 中的一段内存将分配给此对象。举例，假设`x`被分配了内存地址 `140` 。每当我们在表达式或语句`x`中使用变量时，程序都会转到内存地址`140`以访问存储在那里的值。
 
 ### The address-of operator (&) 取址运算符
 
@@ -5776,7 +5796,7 @@ Disadvantage: the caller must make a `nullptr` check
 	</p>
 </div>
 
-# 12.13 — In and out parameters
+## 12.13 — In and out parameters
 
 ```cpp
 // sinOut and cosOut are out parameters
