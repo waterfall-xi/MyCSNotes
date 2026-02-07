@@ -5327,7 +5327,7 @@ Pass by reference should be used for the following:
 | bind to const lvalue                | Error                                                        | OK                                                           |
 | bing to un-matched type             | Error                                                        | OK<br />bing to temporary converted object<br />but unadvisable |
 | bing to temporary object directly   | Error (bind to rvalue)                                       | OK                                                           |
-| bing to temporary object indirectly | Error (bind to rvalue)                                       | OK, but *dangling!*                                          |
+| bing to temporary object indirectly | Error (bind to rvalue)                                       | OK, but dangling!                                            |
 | Use cases<br />(Avoid all others)   | function out/in-out parameter<br />output in operator overloading<br />write elements in range for | function in parameter<br />operand input in operator overloading<br />read-only elements in range for |
 
 ## 12.7 — Introduction to pointers
@@ -5440,10 +5440,15 @@ Much like the type of a reference has to match the type of object being referred
 ```cpp
     int i{ 5 };
     double d{ 7.0 };
+    unsigned char c { 0x61 };
+    unsigned short i_2 { 8 };
 
     int* iPtr{ &i };     // ok: a pointer to an int can point to an int object
     // int* iPtr2 { &d };   // not okay: a pointer to an int can't point to a double object
     double* dPtr{ &d };  // ok: a pointer to a double can point to a double object
+    uint8_t* iPtr_2 { &c }; // ok, almost always: uint8_t is alias of unsigned char in 99% platform
+    uint16_t* iPtr_3 { &i_2 }; // ok, almost always: uint16_t is alias of unsigned short in 99% platform
+    unsigned short int* iPtr_4 { &i_2 }; // ok, always: unsigned short int is alias of unsigned short in 100% platform
     // double* dPtr2{ &i }; // not okay: a pointer to a double can't point to an int object
     // int* ptr1{ 5 }; // not okay
     // int* ptr2{ 0x0012FF7C }; // not okay, 0x0012FF7C is treated as an integer literal
@@ -5489,7 +5494,7 @@ A **dangling pointer** is a pointer that is holding the address of an object tha
 **悬空指针**是保存不再有效的对象地址的指针（例如，因为它已被销毁）。
 
 Dereferencing a dangling pointer will lead to undefined behavior (May program crash).
-取消引用悬空指针将导致未定义的行为（可能导致程序崩溃）。
+解引用悬空指针将导致未定义的行为（可能导致程序崩溃）。
 
 ## 12.8 — Null pointers
 
@@ -5676,7 +5681,7 @@ void print(int* ptr)
 
 ## 12.12 — Return by reference and return by address
 
-### return static object by reference
+### return static object by reference (OK)
 
 ```cpp
 const std::string& getProgramName() // returns a const reference
@@ -5841,13 +5846,14 @@ Because the caller must pass in objects, these values can’t be used as tempora
     </p>
     <p style="margin: 1;">
         Avoid out-parameters (except in the rare case where no better options exist).<br>
-        避免出出参数（除非极少数情况下没有更好的选择）。
+        避免出参数（除非极少数情况下没有更好的选择）。
 	</p>
     <p style="margin: 1;">
         Prefer pass by reference for non-optional out-parameters.<br>
         对于非可选的出参数，优先采用引用传递。
 	</p>
 </div>
+
 ## 12.14 — Type deduction with pointers, references, and const
 
 ### Type deduction drops const / constexpr
@@ -5865,7 +5871,7 @@ Because the caller must pass in objects, these values can’t be used as tempora
 
 **Drop top-level const / constexpr only**
 
-### Type deduction drops references
+### Type deduction drops reference (not a part of type)
 
 ```cpp
 std::string& getRef(); // some function that returns a reference
@@ -5885,16 +5891,88 @@ int main()
 }
 ```
 
-| type             | auto | auto& | const auto | constexpr auto | const auto& |
-| ---------------- | ---- | ----- | ---------- | -------------- | ----------- |
-| const int        |      |       |            |                |             |
-| constexpr int    |      |       |            |                |             |
-| int* const       |      |       |            |                |             |
-| const int*       |      |       |            |                |             |
-| const int* const |      |       |            |                |             |
-| const int&       | int  |       |            |                |             |
+### Type deduction don't drops pointer
+
+| type             | auto | const auto                                               | constexpr auto        | auto&                                                        | const auto&                                                  |
+| ---------------- | ---- | -------------------------------------------------------- | --------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| const int        | int  | const int                                                | const (constexpr) int | const int&                                                   | const int&                                                   |
+| constexpr int    | int  | const int                                                | const (constexpr) int | const int&                                                   | const int&                                                   |
+| int*             | int* | int\* const                                              | error                 | => int* <br /> => int* &                                     | => int* <br /> => int* const&                                |
+| int* const       | int* | => int* <br /> => int* const                             | error                 | => int* <br /> => int* const&                                | => int* <br /> => int* const&                                |
+| const int*       |      |                                                          |                       |                                                              |                                                              |
+| const int* const |      |                                                          |                       |                                                              |                                                              |
+| int&             | int  | => int<br /> => const int<br />                          | error                 | => int<br /> => int&<br />                                   | => int<br /> => int&<br /> => const int&                     |
+| const int&       | int  | => const int<br /> => int<br /> => const int<br /><br /> | error                 | => const int<br /> => const int&<br /> => const int&<br />(this const is low-leve)<br /> | => const int<br /> => const int&<br /> => const int&<br />(this const is low-leve)<br /> => const int& |
+
+```cpp
+               int  i_1 { 0 };
+              auto  a_1 { i_1 };
+        const auto  b_1 { i_1 };
+    // constexpr auto  c_1 { i_1 };
+
+        const  int  i_2 { 1 };
+              auto  a_2 { i_2 };
+        const auto  b_2 { i_2 };
+    constexpr auto  c_2 { i_2 };
+              auto& d_2 { i_2 };
+        const auto& e_2 { i_2 };
+    // constexpr auto& f_2 { i_2 };
+
+    constexpr  int  i_3 { 6 };
+              auto  a_3 { i_3 };
+        const auto  b_3 { i_3 };
+    constexpr auto  c_3 { i_3 };
+              auto& d_3 { i_3 };
+        const auto& e_3 { i_3 };
+    // constexpr auto& f_3 { i_3 };
+
+               int& r_1 { i_1 };
+              auto  u_1 { r_1 };  // => int
+        const auto  v_1 { r_1 };  // => int => const int
+    // constexpr auto  w_1 { r_1 };
+              auto& x_1 { r_1 };  // => int => int&
+        const auto& y_1 { r_1 };  // => int => int& => const int&
+    // constexpr auto& z_1 { r_1 };
+
+        const  int& r_2 { i_1 };
+              auto  u_2 { r_2 };  // => const int => int
+        const auto  v_2 { r_2 };  // => const int => int => const int
+    // constexpr auto  w_2 { r_2 };
+              auto& x_2 { r_2 };  // => const int => const int& => const int& (this const is low-level)
+        const auto& y_2 { r_2 };  // => const int => const int& => const int& (this const is low-level) => const int&
+    // constexpr auto& z_2 { r_2 };
+
+               int* p_1 { &i_1 };
+              auto  u_3 { p_1 };  // => int*
+        const auto  v_3 { p_1 };  // => int* const
+    // constexpr auto  w_3 { p_1 };
+              auto& x_3 { p_1 };  // => int* => int* &
+        const auto& y_3 { p_1 };  // => int* => int* const&
+    // constexpr auto& z_3 { p_1 };
+```
 
 
 
-### Reapply a reference and/or const while type deduction
+```cpp
+#include <string_view>
+#include <iostream>
+
+constexpr std::string_view hello { "Hello" };   // implicitly const
+
+constexpr const std::string_view& getConstRef() // function is constexpr, returns a const std::string_view&
+{
+    return hello;
+}
+
+int main()
+{
+    auto ref1{ getConstRef() };                  // std::string_view (reference dropped and top-level const dropped)
+    constexpr auto ref2{ getConstRef() };        // constexpr const std::string_view (reference dropped and top-level const dropped, constexpr applied, implicitly const)
+
+    auto& ref3{ getConstRef() };                 // const std::string_view& (reference reapplied, low-level const not dropped)
+    constexpr const auto& ref4{ getConstRef() }; // constexpr const std::string_view& (reference reapplied, low-level const not dropped, constexpr applied)
+
+    return 0;
+}
+```
 
