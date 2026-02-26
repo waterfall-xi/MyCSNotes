@@ -6180,7 +6180,7 @@ C++ 有两种不同的复合类型，可用于创建程序定义类型：
 ## 13.2 — Unscoped enumerations
 
 An **enumeration** (also called an **enumerated type** or an **enum**) is a compound data type whose values are restricted to a set of named symbolic constants (called **enumerators**).
-**枚举**（也称为**枚举类型**或**枚举**）是一种复合数据类型，其值被限制在一组命名的符号常数（称为**枚举器**）内。
+**枚举**（也称为**枚举类型**或**枚举**）是一种复合数据类型，其值被限制在一组命名的符号常数（称为**枚举常量**）内。
 
 **Unscoped enumerations** 无作用域枚举
 
@@ -6209,7 +6209,7 @@ int main()
 ```
 
 **Enumerators are implicitly constexpr.**
-**枚举器是隐式 constexpr 的。**
+**枚举常量是隐式 constexpr 的。**
 
 <div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
     <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
@@ -6217,7 +6217,7 @@ int main()
     </p>
     <p style="margin: 1;">
         Name your enumerated types starting with a capital letter. Name your enumerators starting with a lower case letter.<br>
-        请以大写字母开头命名你的枚举类型。你的枚举器名字以小写字母开头。
+        请以大写字母开头命名你的枚举类型。你的枚举常量名字以小写字母开头。
 	</p>
 </div>
 
@@ -6338,7 +6338,171 @@ int main()
 
 Or use a scoped enumeration.
 
-**Comparing against enumerators 枚举器之间的比较**
+**Comparing against enumerators 枚举常量之间的比较**
 
 We can use the equality operators (`operator==` and `operator!=`) to test whether an enumeration has the value of a particular enumerator or not.
-我们可以使用等式运算符（`operator==`和`operator!=`）来测试枚举是否具有特定枚举器的值。
+我们可以使用等式运算符（`operator==`和`operator!=`）来测试枚举是否具有特定枚举常量的值。
+
+## 13.3 — Unscoped enumerator integral conversions
+
+The enumerators in a enumeration have values that are of an integral type.
+
+By default, the first enumerator is given the integral value `0`, and each subsequent enumerator has a value one greater than the previous enumerator:
+默认情况下，第一个枚举常量的积分值`0`为 ，之后的每个枚举常量的值都比前一个枚举常量大一：
+
+```cpp
+enum Color
+{
+    black,   // 0
+    red,     // 1
+    blue,    // 2
+    green,   // 3
+    white,   // 4
+    cyan,    // 5
+    yellow,  // 6
+    magenta, // 7
+};
+
+int main()
+{
+    Color shirt{ blue }; // shirt actually stores integral value 2
+    return 0;
+}
+```
+
+You can also explicitly define:
+
+```cpp
+enum Animal
+{
+    cat = -3,    // values can be negative
+    dog,         // -2
+    pig,         // -1
+    horse = 5,
+    giraffe = 5, // shares same value as horse
+    chicken,     // 6
+};
+```
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Avoid assigning explicit values to your enumerators unless you have a compelling reason to do so.<br>
+        除非有充分理由，否则避免给你的枚举员分配明确的数值。
+	</p>
+</div>
+
+### Value-initializing an enumeration
+
+If an enumeration is zero-initialized (which happens when we use value-initialization), the enumeration will be given value `0`, even if there is no corresponding enumerator with that value.
+如果枚举是零初始化（即使用值初始化时发生），即使没有对应的枚举子，该枚举也会被赋予值 `0` 。
+
+```
+enum Animal
+{
+    cat = -3,    // -3
+    dog,         // -2
+    pig,         // -1
+    // note: no enumerator with value 0 in this list
+    horse = 5,   // 5
+    giraffe = 5, // 5
+    chicken,     // 6
+};
+
+int main()
+{
+    Animal a {}; // value-initialization zero-initializes a to value 0
+    std::cout << a; // prints 0
+    return 0;
+}
+```
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Make the default enumerator represented as 0. And add an "invalid" or "unknown" enumerator to represent it, even if you don't originally have an enumerator that represents 0.<br>
+        使默认枚举常量代表为0。即使你原本没有代表0的枚举常量，也增加一个“无效”或“未知”的枚举常量来代表之。
+	</p>
+</div>
+
+### Enumeration size and underlying type (base)
+
+For unscoped enumerations, most compilers will use `int` as the underlying type.
+
+It is possible to explicitly specify an underlying type:
+
+```cpp
+#include <cstdint>  // for std::int8_t
+
+// Use an 8-bit integer as the enum underlying type
+enum Color : std::int8_t
+{
+    black,
+    red,
+    blue,
+};
+```
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Specify the base type of an enumeration only when necessary.<br>
+        仅在必要时指定枚举的底层类型。
+	</p>
+</div>
+
+### Convert between enumeration and integral
+
+**Unscoped enumerations will implicitly convert to integral values**
+**无作用域枚举会隐式转换为整数值**
+
+**An integer will not implicitly convert to an unscoped enumeration**
+**整数不会隐式地将转换为无作用域枚举**
+
+```cpp
+enum Pet // no specified base
+{
+    cat, // assigned 0
+    dog, // assigned 1
+    pig, // assigned 2
+    whale, // assigned 3
+};
+
+int main()
+{
+    Pet pet { 2 }; // compile error: integer value 2 won't implicitly convert to a Pet
+    pet = 3;       // compile error: integer value 3 won't implicitly convert to a Pet
+    Pet pet { static_cast<Pet>(2) }; // convert integer 2 to a Pet
+    pet = static_cast<Pet>(3);       // our pig evolved into a whale!
+    return 0;
+}
+```
+
+Starting with C++17, if an unscoped enumeration has an explicitly specified base, then the compiler will allow you to list initialize an unscoped enumeration using an integral value:
+从 C++17 开始，如果一个无作用域的枚举有明确指定的基，编译器将允许你用整数值初始化一个无作用域的枚举：
+
+```cpp
+enum Pet: int // we've specified a base
+{
+    cat, // assigned 0
+    dog, // assigned 1
+    pig, // assigned 2
+    whale, // assigned 3
+};
+
+int main()
+{
+    Pet pet1 { 2 }; // ok: can brace initialize unscoped enumeration with specified base with integer (C++17)
+    Pet pet2 (2);   // compile error: cannot direct initialize with integer
+    Pet pet3 = 2;   // compile error: cannot copy initialize with integer
+    pet1 = 3;       // compile error: cannot assign with integer
+    return 0;
+}
+```
+
