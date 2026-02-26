@@ -6176,3 +6176,169 @@ C++ 有两种不同的复合类型，可用于创建程序定义类型：
 
 **Type definitions are partially exempt from the one-definition rule (ODR)**
 **类型定义部分免于单一定义规则（ODR）**
+
+## 13.2 — Unscoped enumerations
+
+An **enumeration** (also called an **enumerated type** or an **enum**) is a compound data type whose values are restricted to a set of named symbolic constants (called **enumerators**).
+**枚举**（也称为**枚举类型**或**枚举**）是一种复合数据类型，其值被限制在一组命名的符号常数（称为**枚举器**）内。
+
+**Unscoped enumerations** 无作用域枚举
+
+```cpp
+// Define a new unscoped enumeration named Color
+enum Color
+{
+    // Here are the enumerators
+    // These symbolic constants define all the possible values this type can hold
+    // Each enumerator is separated by a comma, not a semicolon
+    red,
+    green,
+    blue, // trailing comma optional but recommended
+}
+
+int main()
+{
+    Color apple { red };   // my apple is red
+    Color shirt { green }; // my shirt is green
+    Color cup { blue };    // my cup is blue
+    Color socks { white }; // error: white is not an enumerator of Color
+    Color hat { 2 };       // error: 2 is not an enumerator of Color
+
+    return 0;
+}
+```
+
+**Enumerators are implicitly constexpr.**
+**枚举器是隐式 constexpr 的。**
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Name your enumerated types starting with a capital letter. Name your enumerators starting with a lower case letter.<br>
+        请以大写字母开头命名你的枚举类型。你的枚举器名字以小写字母开头。
+	</p>
+</div>
+
+**Enumerated types are distinct types**
+**枚举类型是不同的类型**
+
+### bit flags & Enums 位标志 & 枚举
+
+```cpp
+#include <bitset>
+#include <iostream>
+
+namespace Flags
+{
+    enum State
+    {
+        isHungry,
+        isSad,
+        isMad,
+        isHappy,
+        isLaughing,
+        isAsleep,
+        isDead,
+        isCrying,
+    };
+}
+
+int main()
+{
+    std::bitset<8> me{};
+    me.set(Flags::isHappy);
+    me.set(Flags::isLaughing);
+
+    std::cout << std::boolalpha; // print bool as true/false
+
+    // Query a few states (we use the any() function to see if any bits remain set)
+    std::cout << "I am happy? " << me.test(Flags::isHappy) << '\n';
+    std::cout << "I am laughing? " << me.test(Flags::isLaughing) << '\n';
+
+    return 0;
+}
+```
+
+### The scope of unscoped enumerations 无作用域枚举的作用域
+
+```cpp
+enum Color // this enum is defined in the global namespace
+{
+    red, // so red is put into the global namespace
+    green,
+    blue,
+};
+
+int main()
+{
+    Color apple { red }; // okay, accessing enumerator from global namespace
+    Color raspberry { Color::red }; // also okay, accessing enumerator from scope of Color
+    return 0;
+}
+```
+
+It's bad:
+
+```cpp
+enum Color
+{
+    red,
+    green,
+    blue, // blue is put into the global namespace
+};
+
+enum Feeling
+{
+    happy,
+    tired,
+    blue, // error: naming collision with the above blue
+};
+
+int main()
+{
+    Color apple { red }; // my apple is red
+    Feeling me { happy }; // I'm happy right now (even though my program doesn't compile)
+    return 0;
+}
+```
+
+Solution:
+
+```cpp
+namespace Color
+{
+    // The names Color, red, blue, and green are defined inside namespace Color
+    enum Color
+    {
+        red,
+        green,
+        blue,
+    };
+}
+
+namespace Feeling
+{
+    enum Feeling
+    {
+        happy,
+        tired,
+        blue, // Feeling::blue doesn't collide with Color::blue
+    };
+}
+
+int main()
+{
+    Color::Color paint{ Color::blue };
+    Feeling::Feeling me{ Feeling::blue };
+    return 0;
+}
+```
+
+Or use a scoped enumeration.
+
+**Comparing against enumerators 枚举器之间的比较**
+
+We can use the equality operators (`operator==` and `operator!=`) to test whether an enumeration has the value of a particular enumerator or not.
+我们可以使用等式运算符（`operator==`和`operator!=`）来测试枚举是否具有特定枚举器的值。
