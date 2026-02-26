@@ -6126,3 +6126,53 @@ Also:
 	</p>
 </div>
 
+# 13 Compound Types: Enums and Structs
+
+## 13.1 — Introduction to program-defined (user-defined) types
+
+C++ has two different categories of compound types that can be used to create program-defined types:
+C++ 有两种不同的复合类型，可用于创建程序定义类型：
+
+- Enumerated types (including unscoped and scoped enumerations)
+    枚举类型（包括无作用域和有作用域的枚举）
+- Class types (including structs, classes, and unions).
+    类类型（包括结构体、类和联合体）。
+
+**Defining program-defined types must be given a name**
+
+<div style="border: 2px solid #d89696; background-color: #ffd6d6; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Warning
+    </p>
+    <p style="margin: 1;">
+        Don’t forget to end your type definitions with a semicolon.<br>
+        别忘了用分号结束你的类型定义。
+    </p>
+</div>
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Name your program-defined types starting with a capital letter and do not use a suffix.<br>
+        请将程序定义的类型命名为以大写字母开头，且不要使用后缀。
+	</p>
+</div>
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        A program-defined type used in only one code file should be defined in that code file as close to the first point of use as possible.<br>
+        仅在一个代码文件中使用的程序定义类型应尽可能接近第一个使用点。
+	</p>
+    <p style="margin: 1;">
+        A program-defined type used in multiple code files should be defined in a header file with the same name as the program-defined type and then #included into each code file as needed.<br>
+        在多个代码文件中使用的程序定义类型应在与该程序定义类型同名的头文件中定义，然后根据需要 #included 入每个代码文件。
+	</p>
+</div>
+
+**Type definitions are partially exempt from the one-definition rule (ODR)**
+**类型定义部分免于单一定义规则（ODR）**
