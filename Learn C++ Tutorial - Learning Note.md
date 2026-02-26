@@ -5976,3 +5976,153 @@ int main()
 }
 ```
 
+# 12.15 — `std::optional`
+
+## How can a function return an error signal?
+
+- Return `bool` (for `void` functions)
+- Return a **sentinel value** (a special value that does not occur in the set of possible values the function can otherwise return)
+    返回一个**哨兵值** (理论上函数不可能返回的特殊值)
+- Return a `bool` extraly
+
+### Problems of sentinel values
+
+- The caller must remember which value means “failure”
+- Different functions may use different sentinel values
+- Some functions have **no safe sentinel value**
+- Semipredicate problem (结果可能歧义，当强行使用极其不常见的值作为哨兵值，需要担心实际计算结果恰好就是这个值)
+
+## `std::optional` (C++17)
+
+`std::optional<T>` represents:
+
+- Either a value of type `T`
+- Or no value
+
+```cpp
+#include <optional>
+
+std::optional<int> doIntDivision(int x, int y)
+{
+    if (y == 0)
+        return {};            // or std::nullopt
+
+    return x / y;
+}
+
+// Using:
+std::optional<int> result { doIntDivision(20, 5) };
+
+if (result) // has value?
+    std::cout << *result << '\n';
+else
+    std::cout << "failed\n";
+```
+
+### Constructing `std::optional`
+
+```cpp
+std::optional<int> o1 { 5 };            // has value
+std::optional<int> o2 {};               // no value
+std::optional<int> o3 { std::nullopt }; // no value
+```
+
+### Checking if it has value
+
+```cpp
+if (o1.has_value())
+if (o1)  // implicit conversion to bool
+```
+
+### Getting the value
+
+```cpp
+*o1;                // undefined behavior if no value
+o1.value();         // throws std::bad_optional_access if no value
+o1.value_or(42);    // returns stored value or 42
+```
+
+### `std::optional` vs pointer
+
+| Behavior  | Pointer       | std::optional         |
+| --------- | ------------- | --------------------- |
+| No value  | `nullptr`     | `{}` / `std::nullopt` |
+| Has value | store address | store value           |
+| Check     | implicit bool | implicit bool         |
+| Get value | dereference   | dereference / value() |
+
+- Pointer → **reference semantics** (holds address)
+- `std::optional` → **value semantics** (holds value)
+
+Returning pointer copies the pointer.
+Returning `std::optional` copies the value.
+
+### Advantages of returning `std::optional`
+
+- Clearly documents “may fail”
+- No sentinel value to remember
+- Clean syntax
+- No ambiguity
+
+### Disadvantages of returning `std::optional`
+
+- Must check before dereferencing
+- Cannot store failure reason
+
+## `std::optional` as optional parameter
+
+Old way (pointer):
+
+```cpp
+void printIDNumber(const int* id = nullptr)
+{
+    if (id)
+        std::cout << *id << '\n';
+}
+```
+
+Using `std::optional`:
+
+```cpp
+#include <optional>
+
+void printIDNumber(std::optional<const int> id = std::nullopt)
+{
+    if (id)
+        std::cout << *id << '\n';
+}
+```
+
+### Advantages
+
+- Documents parameter is optional
+- Can pass rvalue
+
+```cpp
+printIDNumber(42); // OK
+```
+
+### Disadvantages
+
+`std::optional<T>` copies `T`.
+
+If `T` is expensive to copy (e.g. `std::string`), this is inefficient.
+
+Also:
+
+- `std::optional` does not support references (as of C++23)
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Prefer <code>std::optional</code> for optional return types.<br>
+        最好用<code>std::optional</code>作为可选的返回类型（需要提示是否失败）。
+	</p>
+    <p style="margin: 1;">
+        Prefer function overloading for optional function parameters (when possible).<br>
+        只要可能，最好用函数重载来实现可选函数参数。
+	</p>
+</div>
+
