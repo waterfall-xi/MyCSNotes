@@ -6643,3 +6643,219 @@ namespace Color
 }
 ```
 
+## 13.7 — Introduction to structs, members, and member selection
+
+```cpp
+struct Employee
+{
+    int id {};
+    int age {};
+    double wage {};
+};
+
+int main()
+{
+    Employee joe {};
+    joe.id = 14;
+    joe.age = 32;
+    joe.wage = 60000.0;
+
+    Employee frank {};
+    frank.id = 15;
+    frank.age = 28;
+    frank.wage = 45000.0;
+
+    int totalAge { joe.age + frank.age };
+    std::cout << "Joe and Frank have lived " << totalAge << " total years\n";
+    if (joe.wage > frank.wage)
+        std::cout << "Joe makes more than Frank\n";
+    else if (joe.wage < frank.wage)
+        std::cout << "Joe makes less than Frank\n";
+    else
+        std::cout << "Joe and Frank make the same amount\n";
+    // Frank got a promotion
+    frank.wage += 5000.0;
+    // Today is Joe's birthday
+    ++joe.age; // use pre-increment to increment Joe's age by 1
+    
+    return 0;
+}
+```
+
+## 13.8 — Struct aggregate initialization
+
+### Data members are not initialized by default
+
+```cpp
+struct Employee
+{
+    int id; // note: no initializer here
+    int age;
+    double wage;
+};
+
+int main()
+{
+    Employee joe; // note: no initializer here either. joe.id, joe.age, joe.wage are garbage value
+    std::cout << joe.id << '\n';
+    return 0;
+}
+```
+
+**Structs with only data members are aggregates.**
+
+aggregates的概念太冗杂，这里不做展开
+
+```cpp
+struct Employee
+{
+    int id {};
+    int age {};
+    double wage { 76000.0 };
+    double whatever;
+};
+
+Employee frank = { 1, 32, 60000.0 }; // copy-list initialization using braced list
+Employee joe { 2, 28, 45000.0 };     // list initialization using braced list (preferred)
+Employee nick { 2, 28 }; // nick.wage=76000, joe.whatever will be value-initialized to 0.0
+```
+
+### Designated initializers & Assignment with designated initializers (C++20)
+
+```cpp
+struct Foo
+{
+    int a{ };
+    int b{ };
+    int c{ };
+};
+// After C++20
+Foo f1{ .a{ 1 }, .c{ 3 } }; // ok: f1.a = 1, f1.b = 0 (value initialized), f1.c = 3
+Foo f2{ .a = 1, .c = 3 };   // ok: f2.a = 1, f2.b = 0 (value initialized), f2.c = 3
+Foo f3{ .b{ 2 }, .a{ 1 } }; // error: initialization order does not match order of declaration in struct
+
+f1 = {f1.a, 4, 2};
+// After C++20
+f1 = {.a = f1.a, .b = 4, .c = 2};
+```
+
+## 13.9 — Default member initialization
+
+```cpp
+struct Something
+{
+    int x;       // no initialization value (bad)
+    int y {};    // value-initialized by default
+    int z { 2 }; // explicit default value
+};
+
+int main()
+{
+    Something s1;             // No initializer list: s1.x is uninitialized, s1.y and s1.z use defaults
+    Something s2 { 5, 6, 7 }; // Explicit initializers: s2.x, s2.y, and s2.z use explicit values (no default values are used)
+    Something s3 {};          // Missing initializers: s3.x is value initialized, s3.y and s3.z use defaults
+    return 0;
+}
+```
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Provide a default value for all members. This ensures that your members will be initialized even if the variable definition doesn’t include an initializer list.<br>
+        为所有成员提供默认值。这确保即使变量定义中没有初始化器列表，成员也会被初始化。
+	</p>
+</div>
+
+## 13.10 — Passing and returning structs
+
+```cpp
+void printEmployee(const Employee& employee) // note pass by reference here
+{
+    std::cout << "ID:   " << employee.id << '\n';
+    std::cout << "Age:  " << employee.age << '\n';
+    std::cout << "Wage: " << employee.wage << '\n';
+}
+
+int main()
+{
+    Employee joe { 14, 32, 24.15 };
+    printEmployee(joe);
+    printEmployee(Employee { 14, 32, 24.15 }); // construct a temporary Employee to pass to function (type explicitly specified) (preferred)
+    printEmployee({ 15, 28, 18.27 }); // construct a temporary Employee to pass to function (type deduced from parameter)
+
+    return 0;
+}
+```
+
+```cpp
+struct Point3d
+{
+    double x { 0.0 };
+    double y { 0.0 };
+    double z { 0.0 };
+};
+
+Point3d getZeroPoint()
+{
+    // The following three options are feasible
+    // a)
+    Point3d temp { 0.0, 0.0, 0.0 };
+    return temp;
+    // b)
+    return Point3d { 0.0, 0.0, 0.0 }; // return an unnamed Point3d
+    // c)
+    // We already specified the type at the function declaration so we don't need to do so here again
+    return { 0.0, 0.0, 0.0 }; // return an unnamed Point3d
+}
+```
+
+## 13.11 — Struct miscellany
+
+### Structs with program-defined members
+
+```cpp
+struct Employee
+{
+    int id {};
+    int age {};
+    double wage {};
+};
+
+struct Company
+{
+    int numberOfEmployees {};
+    Employee CEO {}; // Employee is a struct within the Company struct
+};
+
+Company myCompany{ 7, { 1, 32, 55000.0 } }; // Nested initialization list to initialize Employee
+```
+
+```cpp
+struct Company
+{
+    struct Employee // accessed via Company::Employee
+    {
+        int id{};
+        int age{};
+        double wage{};
+    };
+
+    int numberOfEmployees{};
+    Employee CEO{}; // Employee is a struct within the Company struct
+};
+```
+
+### Structs that are owners should have data members that are owners
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        In most cases, we want our structs (and classes) to be owners. The easiest way to enable this is to ensure each data member has an owning type (e.g. not a viewer, pointer, or reference).<br>
+        在大多数情况下，我们希望我们的结构体（和类）成为所有者。实现这一点最简单的方法是确保每个数据成员都有一个拥有类型（例如，不是查看器、指针或引用）。
+	</p>
+</div>
+
