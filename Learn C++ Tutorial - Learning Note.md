@@ -307,6 +307,8 @@ More about gcc is here: https://gcc.gnu.org/onlinedocs/gcc/index.html#SEC_Conten
 
 ## 0.10 — Configuring your compiler: Compiler extensions
 
+------
+
 # 1 C++ Basics
 
 ## 1.1 — Statements and the structure of a program
@@ -737,6 +739,8 @@ In general programming, an **expression** is a non-empty sequence of literals, v
 </div>
 
 ## 1.11 — Developing your first program
+
+------
 
 # 2 C++ Basics: Functions and Files
 
@@ -1321,9 +1325,13 @@ int getSquarePerimeter(int sideLength); // forward declaration for getSquarePeri
 
 ## 2.13 — How to design your first programs
 
+------
+
 # 3 Debugging C++ Programs
 
 
+
+------
 
 # 4 Fundamental Data Types
 
@@ -1409,6 +1417,8 @@ Otherwise, something specially happen.
 
 **std::int8_t and std::uint8_t likely behave like chars instead of integers**
 std：：int8_t 和 std：：uint8_t 的行为可能类似于 chars 而不是整数
+
+------
 
 # 5 Constants and Strings
 
@@ -2262,6 +2272,8 @@ Due to the `remove_suffix()`, `std::string_view` may or may not be null-terminat
 - Writing an accessor for a `std::string` or `const std::string` member.
 - The function returns a static (local or global) `const std::string`.
 
+------
+
 # 6 Operators
 
 ## 6.1 — Operator precedence and associativity
@@ -2838,6 +2850,8 @@ Similarly, if `z == 1`, the `z == 2` won't be evaluated.
 | false        | true          | true        | true       |
 | true         | false         | true        | true       |
 | true         | true          | false       | false      |
+
+------
 
 # 7 Scope, Duration, and Linkage
 
@@ -3817,6 +3831,8 @@ about when the entity created and destroyed
 
 
 
+------
+
 # 8 Control Flow
 
 ## 8.1 — Control flow introduction
@@ -4137,6 +4153,8 @@ int main()
 
 ## 8.15 — Global random numbers (Random.h)
 
+------
+
 # 9 Error Detection and Handling
 
 ## 9.1 — Introduction to testing your code
@@ -4393,6 +4411,8 @@ static_assert(condition, diagnostic_message)
 Assertions: *programming errors* during development by documenting assumptions about things that should never happen.
 
 Error handling: gracefully handle cases that could happen (however rarely) in a release build.
+
+------
 
 # 10 Type Conversion, Type Aliases, and Type Deduction
 
@@ -4670,6 +4690,8 @@ Downsides:
 </div>
 
 **Type deduction can’t be used for function parameter types**
+
+------
 
 # 11 Function Overloading and Function Templates
 
@@ -5009,6 +5031,8 @@ int main()
     return 0;
 }
 ```
+
+------
 
 # 12 Compound Types: References and Pointers
 
@@ -6125,6 +6149,8 @@ Also:
         只要可能，最好用函数重载来实现可选函数参数。
 	</p>
 </div>
+
+------
 
 # 13 Compound Types: Enums and Structs
 
