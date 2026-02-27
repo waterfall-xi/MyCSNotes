@@ -6304,7 +6304,7 @@ int main()
 }
 ```
 
-Solution:
+Solution (before C++11):
 
 ```cpp
 namespace Color
@@ -6399,7 +6399,7 @@ enum Animal
 If an enumeration is zero-initialized (which happens when we use value-initialization), the enumeration will be given value `0`, even if there is no corresponding enumerator with that value.
 如果枚举是零初始化（即使用值初始化时发生），即使没有对应的枚举子，该枚举也会被赋予值 `0` 。
 
-```
+```cpp
 enum Animal
 {
     cat = -3,    // -3
@@ -6503,6 +6503,143 @@ int main()
     Pet pet3 = 2;   // compile error: cannot copy initialize with integer
     pet1 = 3;       // compile error: cannot assign with integer
     return 0;
+}
+```
+
+## 13.6 — Scoped enumerations (enum classes)
+
+Scoped enumerations add some limitations to solve two problems with unscoped enumerations.
+枚举类增加了一些限制以解决无作用域枚举的一些问题。
+
+### Not type safe (Implicit type conversion ambiguity)
+
+Unscoped enumerations may implicit convert to int, which bring some semantically ambiguity:
+
+无作用域枚举可能隐式转换为int，这会带来一定的语义歧义：
+
+```cpp
+enum Color
+{
+    red,
+    blue,
+};
+
+enum Fruit
+{
+    banana,
+    apple,
+};
+
+Color color { red };
+Fruit fruit { banana };
+
+if (color == fruit) // The compiler will compare color and fruit as integers
+    std::cout << "color and fruit are equal\n"; // and find they are equal!
+else
+    std::cout << "color and fruit are not equal\n";
+```
+
+Unscoped enumerations can easily be treated as ints in the operation, which deviates from the idea that enums are designed to represent only a given semantic (`Color::red` becomes 0, and it may inadvertently represent a lot of semantics other than red).
+无作用域枚举很容易在运算时被视为int，这脱离了枚举通常只应该表示给定语义的设计初衷（`Color::red`变成了0，结果是可能在无意中代表很多红色以外的语义）
+
+```cpp
+enum class Color // "enum class" defines this as a scoped enumeration rather than an unscoped enumeration
+{
+    red, // red is considered part of Color's scope region
+    blue,
+};
+
+enum class Fruit
+{
+    banana, // banana is considered part of Fruit's scope region
+    apple,
+};
+
+Color color { Color::red }; // note: red is not directly accessible, we have to use Color::red
+Fruit fruit { Fruit::banana }; // note: banana is not directly accessible, we have to use Fruit::banana
+
+if (color == fruit) // compile error: the compiler doesn't know how to compare different types Color and Fruit
+    std::cout << "color and fruit are equal\n";
+else
+    std::cout << "color and fruit are not equal\n";
+// explicitly convert
+int i = static_cast<int>(color);
+int j = std::to_underlying()(fruit);  // C++23, #include <utility>
+```
+
+enum class will not implicitly convert to int
+enum class不会隐式转换为int
+
+### Scope pollution
+
+As mentioned before, enumerator in unscoped enumerations have same scope with unscoped enumerations, it makes naming collisions easier.
+如前所述，无作用域枚举中的枚举常量与无作用域枚举具有相同的作用范围，这使得命名冲突更容易发生。
+
+```cpp
+std::cout << red << '\n';        // compile error: red not defined in this scope region
+std::cout << Color::red << '\n'; // compile error: std::cout doesn't know how to print this (will not implicitly convert to int)
+Color color { Color::blue }; // okay
+```
+
+enum class offer a implicit namespacing for enumerators to solve it.
+enum class 为枚举常量提供一个隐式命名空间来解决之。
+
+### Initialization
+
+After C++17, enum class supports use int literal in direct-list-initialization.
+C++17后，enum class 支持在 direct-list-initialization 中直接使用整型字面值。
+
+This is mainly for generic programming support; avoid it unless necessary.
+这主要是为了泛型编程支持，非必要请避免使用。
+
+```cpp
+Color color { 1 }; // okay, but unrecommended
+Color color = { 1 }; // error
+Color color(1); // error
+Color color = 1; // error
+int i = i;
+Color color = { i }; // error
+Color color { Color::blue }; // okay, and recommended
+Color color = static_cast<Color>(1); // okay
+```
+
+### Summary suggestions 总结建议
+
+```cpp
+// C-style typedef enum, anonymous enum + int alias essentially
+// Don't use, unless for C compatible
+typedef enum
+{
+    black,
+    red,
+    blue,
+} Color;
+// Unscoped enum
+// Try not to use
+enum Color
+{
+    black,
+    red,
+    blue,
+};
+// Scoped enum
+// Recommended after C++11
+enum class Color
+{
+    black,
+    red,
+    blue,
+};
+// namespace + unscoped enum
+// Don't use after C++11
+namespace Color
+{
+    enum Color
+    {
+        black,
+        red,
+        blue,
+    };
 }
 ```
 
