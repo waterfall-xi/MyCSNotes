@@ -6000,23 +6000,23 @@ int main()
 }
 ```
 
-# 12.15 — `std::optional`
+## 12.15 — `std::optional`
 
-## How can a function return an error signal?
+### How can a function return an error signal?
 
 - Return `bool` (for `void` functions)
 - Return a **sentinel value** (a special value that does not occur in the set of possible values the function can otherwise return)
     返回一个**哨兵值** (理论上函数不可能返回的特殊值)
 - Return a `bool` extraly
 
-### Problems of sentinel values
+#### Problems of sentinel values
 
 - The caller must remember which value means “failure”
 - Different functions may use different sentinel values
 - Some functions have **no safe sentinel value**
 - Semipredicate problem (结果可能歧义，当强行使用极其不常见的值作为哨兵值，需要担心实际计算结果恰好就是这个值)
 
-## `std::optional` (C++17)
+### `std::optional` (C++17)
 
 `std::optional<T>` represents:
 
@@ -6043,7 +6043,7 @@ else
     std::cout << "failed\n";
 ```
 
-### Constructing `std::optional`
+#### Constructing `std::optional`
 
 ```cpp
 std::optional<int> o1 { 5 };            // has value
@@ -6051,14 +6051,14 @@ std::optional<int> o2 {};               // no value
 std::optional<int> o3 { std::nullopt }; // no value
 ```
 
-### Checking if it has value
+#### Checking if it has value
 
 ```cpp
 if (o1.has_value())
 if (o1)  // implicit conversion to bool
 ```
 
-### Getting the value
+#### Getting the value
 
 ```cpp
 *o1;                // undefined behavior if no value
@@ -6066,7 +6066,7 @@ o1.value();         // throws std::bad_optional_access if no value
 o1.value_or(42);    // returns stored value or 42
 ```
 
-### `std::optional` vs pointer
+#### `std::optional` vs pointer
 
 | Behavior  | Pointer       | std::optional         |
 | --------- | ------------- | --------------------- |
@@ -6081,19 +6081,19 @@ o1.value_or(42);    // returns stored value or 42
 Returning pointer copies the pointer.
 Returning `std::optional` copies the value.
 
-### Advantages of returning `std::optional`
+#### Advantages of returning `std::optional`
 
 - Clearly documents “may fail”
 - No sentinel value to remember
 - Clean syntax
 - No ambiguity
 
-### Disadvantages of returning `std::optional`
+#### Disadvantages of returning `std::optional`
 
 - Must check before dereferencing
 - Cannot store failure reason
 
-## `std::optional` as optional parameter
+### `std::optional` as optional parameter
 
 Old way (pointer):
 
@@ -6117,7 +6117,7 @@ void printIDNumber(std::optional<const int> id = std::nullopt)
 }
 ```
 
-### Advantages
+#### Advantages
 
 - Documents parameter is optional
 - Can pass rvalue
@@ -6126,7 +6126,7 @@ void printIDNumber(std::optional<const int> id = std::nullopt)
 printIDNumber(42); // OK
 ```
 
-### Disadvantages
+#### Disadvantages
 
 `std::optional<T>` copies `T`.
 
@@ -6884,4 +6884,3 @@ struct Company
         在大多数情况下，我们希望我们的结构体（和类）成为所有者。实现这一点最简单的方法是确保每个数据成员都有一个拥有类型（例如，不是查看器、指针或引用）。
 	</p>
 </div>
-
