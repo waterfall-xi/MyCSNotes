@@ -6884,3 +6884,20 @@ struct Company
         在大多数情况下，我们希望我们的结构体（和类）成为所有者。实现这一点最简单的方法是确保每个数据成员都有一个拥有类型（例如，不是查看器、指针或引用）。
 	</p>
 </div>
+## 13.12 — Member selection with pointers and references
+
+```cpp
+struct Employee
+{
+    int id{};
+    int age{};
+    double wage{};
+};
+
+Employee joe{ 1, 34, 65000.0 };
+Employee* ptr{ &joe };
+std::cout << ptr.id << '\n'; // Compile error: can't use operator. with pointers
+std::cout << (*ptr).id << '\n'; // Not great but works: First dereference ptr, then use member selection
+std::cout << ptr->id << '\n'; // Better: use -> to select member from pointer to object
+```
+
