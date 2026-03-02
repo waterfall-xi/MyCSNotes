@@ -6949,3 +6949,65 @@ void print(Pair<T, U> p)
 }
 ```
 
+## 13.14 — Class template argument deduction (CTAD) and deduction guides
+
+## 13.15 — Alias templates
+
+# 14 Introduction to Classes
+
+## 14.1 — Introduction to object-oriented programming
+
+## 14.2 — Introduction to classes
+
+struct cannot achieve a fraction which denominator is never 0
+
+```cpp
+struct Fraction
+{
+    int numerator { 0 };
+    int denominator { 1 }; // class invariant: should never be 0
+};
+
+void printFractionValue(const Fraction& f)
+{
+     std::cout << f.numerator / f.denominator << '\n';
+}
+
+Fraction f { 5, 0 };   // create a Fraction with a zero denominator
+printFractionValue(f); // cause divide by zero error
+```
+
+struct cannot achieve a struct that the members are correlated
+
+```cpp
+struct Employee
+{
+    std::string name { };
+    char firstInitial { }; // should always hold first character of `name` (or `0`)
+};
+```
+
+Simple example
+
+```cpp
+class Date       // we changed struct to class
+{
+public:          // and added this line, which is called an access specifier
+    int m_day{}; // and added "m_" prefixes to each of the member names
+    int m_month{};
+    int m_year{};
+};
+
+void printDate(const Date& date)
+{
+    std::cout << date.m_day << '/' << date.m_month << '/' << date.m_year;
+}
+
+int main()
+{
+    Date date{ 4, 10, 21 };
+    printDate(date);
+    return 0;
+}
+```
+
