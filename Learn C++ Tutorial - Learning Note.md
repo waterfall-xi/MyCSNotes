@@ -6901,3 +6901,51 @@ std::cout << (*ptr).id << '\n'; // Not great but works: First dereference ptr, t
 std::cout << ptr->id << '\n'; // Better: use -> to select member from pointer to object
 ```
 
+## 13.13 — Class templates
+
+```cpp
+template <typename T>
+struct Pair
+{
+    T first{};
+    T second{};
+};
+
+template <typename T>
+constexpr T max(Pair<T> p)
+{
+    return (p.first < p.second ? p.second : p.first);
+}
+
+int main()
+{
+    Pair<int> p1{ 5, 6 };        // instantiates Pair<int> and creates object p1
+    std::cout << p1.first << ' ' << p1.second << '\n';
+    Pair<double> p2{ 1.2, 3.4 }; // instantiates Pair<double> and creates object p2
+    std::cout << p2.first << ' ' << p2.second << '\n';
+    Pair<double> p3{ 7.8, 9.0 }; // creates object p3 using prior definition for Pair<double>
+    std::cout << p3.first << ' ' << p3.second << '\n';
+    
+    Pair<int> p1{ 5, 6 };
+    std::cout << max<int>(p1) << " is larger\n"; // explicit call to max<int>
+    Pair<double> p2{ 1.2, 3.4 };
+    std::cout << max(p2) << " is larger\n"; // call to max<double> using template argument deduction (prefer this)
+    return 0;
+}
+```
+
+```cpp
+template <typename T, typename U>
+struct Pair
+{
+    T first{};
+    U second{};
+};
+
+template <typename T, typename U>
+void print(Pair<T, U> p)
+{
+    std::cout << '[' << p.first << ", " << p.second << ']';
+}
+```
+
