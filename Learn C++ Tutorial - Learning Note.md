@@ -4067,6 +4067,10 @@ The condition in a switch must evaluate to an *integral type* or an *enumerated 
     }
 ```
 
+**`break` always end the innermost loop or `switch` that contains it directly**
+
+**`continue` always continue (over the current iteration) the innermost loop that contains it directly**
+
 ## 8.12 — Halts (exiting your program early)
 
 ### `std::exit()`
