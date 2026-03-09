@@ -7041,3 +7041,55 @@ int main()
 ```
 
 **Member functions can be overloaded**
+
+## 14.4 — Const class objects and const member functions
+
+```cpp
+struct Date
+{
+    int year {};
+    int month {};
+    int day {};
+    // void print()  // today.print(); compile error: can't call non-const member function
+    void print() const // now a const member function (the const keyword must be used on both the function declaration in the class definition)
+    {
+        // ++day; // compile error: const function can't modify member
+        std::cout << year << '/' << month << '/' << day;
+    }
+};
+
+int main()
+{
+    const Date today { 2020, 10, 14 }; // const
+    today.day += 1;  // compile error: can't modify member of const object
+    today.print();  // ok: const object can call const member function
+
+    return 0;
+}
+```
+
+<div style="border: 2px solid #9caad4; background-color: #dfe7ff; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Key insight
+    </p>
+    <p style="margin: 1;">
+        A const member function may not: modify the implicit object (this), call non-const member functions.<br>
+        const 成员函数不得：修改隐式对象（this），调用非const成员函数。
+    </p>
+    <p style="margin: 1;">
+        A const member function may: modify objects that aren’t the implicit object (this), call const member functions, call non-member functions.<br>
+        const 成员函数可以：修改非隐式对象（this）的对象，调用 const 成员函数，调用非成员函数。
+    </p>
+</div>
+
+**总之就是，保证不会修改当前对象**
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        A member function that does not (and will not ever) modify the state of the object should be made const.<br>
+        一个成员函数如果不会（也永远不会）修改对象的状态，应设置为const。
+	</p>
+</div>
