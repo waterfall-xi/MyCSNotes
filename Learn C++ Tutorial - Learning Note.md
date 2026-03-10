@@ -7093,3 +7093,215 @@ int main()
         一个成员函数如果不会（也永远不会）修改对象的状态，应设置为const。
 	</p>
 </div>
+
+## 14.5 — Public and private members and access specifiers
+
+> public
+> private
+> protected
+
+**The members of a struct are public by default**
+
+```cpp
+struct Date
+{
+    // struct members are public by default, can be accessed by anyone
+    int year {};       // public by default
+    int month {};      // public by default
+    int day {};        // public by default
+
+    void print() const // public by default
+    {
+        // public members can be accessed in member functions of the class type
+        std::cout << year << '/' << month << '/' << day;
+    }
+};
+
+int main()
+{
+    Date today { 2020, 10, 14 }; // aggregate initialize our struct
+    // public members can be accessed by the public
+    today.day = 16; // okay: the day member is public
+    today.print();  // okay: the print() member function is public
+    return 0;
+}
+```
+
+**The members of a class are private by default**
+
+```cpp
+class Date // now a class instead of a struct
+{
+    // class members are private by default, can only be accessed by other members
+    int m_year {};     // private by default
+    int m_month {};    // private by default
+    int m_day {};      // private by default
+
+    void print() const // private by default
+    {
+        // private members can be accessed in member functions
+        std::cout << m_year << '/' << m_month << '/' << m_day;
+    }
+};
+
+int main()
+{
+    Date today { 2020, 10, 14 }; // compile error: can no longer use aggregate initialization
+    // private members can not be accessed by the public
+    today.m_day = 16; // compile error: the m_day member is private
+    today.print();    // compile error: the print() member function is private
+    return 0;
+}
+```
+
+```cpp
+class Date
+{
+public: // here's our public access specifier
+
+    void print() const // public due to above public: specifier
+    {
+        // members can access other private members
+        std::cout << m_year << '/' << m_month << '/' << m_day;
+    }
+private: // here's our private access specifier
+    int m_year { 2020 };  // private due to above private: specifier
+    int m_month { 14 }; // private due to above private: specifier
+    int m_day { 10 };   // private due to above private: specifier
+};
+
+int main()
+{
+    Date d{};
+    d.print();  // okay, main() allowed to access public members
+    return 0;
+}
+```
+
+
+
+| Access level | Access specifier | Member access | Derived class access | Public access |
+| :----------- | :--------------- | :------------ | :------------------- | :------------ |
+| Public       | public:          | yes           | yes                  | yes           |
+| Protected    | protected:       | yes           | yes                  | no            |
+| Private      | private:         | yes           | no                   | no            |
+
+**A member function can also directly access the private members of ANY other object of the same class type that is in scope.**
+
+```cpp
+class Person
+{
+private:
+    std::string m_name{};
+public:
+    void kisses(const Person& p) const
+    {
+        std::cout << m_name << " kisses " << p.m_name << '\n';
+    }
+    void setName(std::string_view name)
+    {
+        m_name = name;
+    }
+};
+
+int main()
+{
+    Person joe;
+    joe.setName("Joe");
+    Person kate;
+    kate.setName("Kate");
+    joe.kisses(kate);
+    return 0;
+}
+```
+
+## 14.6 — Access functions
+
+```cpp
+class Date
+{
+private:
+    int m_year { 2020 };
+    int m_month { 10 };
+    int m_day { 14 };
+public:
+    void print()
+    {
+        std::cout << m_year << '/' << m_month << '/' << m_day << '\n';
+    }
+    int getYear() const { return m_year; }        // getter for year
+    void setYear(int year) { m_year = year; }     // setter for year
+    int getMonth() const  { return m_month; }     // getter for month
+    void setMonth(int month) { m_month = month; } // setter for month
+    int getDay() const { return m_day; }          // getter for day
+    void setDay(int day) { m_day = day; }         // setter for day
+};
+
+int main()
+{
+    Date d{};
+    d.setYear(2021);
+    std::cout << "The year is: " << d.getYear() << '\n';
+    return 0;
+}
+```
+
+## 14.7 — Member functions returning references to data members
+
+```cpp
+class Employee
+{
+	std::string m_name{};
+
+public:
+	void setName(std::string_view name) { m_name = name; }
+	const std::string& getName() const { return m_name; } //  getter returns by const reference
+};
+
+int main()
+{
+	Employee joe{}; // joe exists until end of function
+	joe.setName("Joe");
+	std::cout << joe.getName(); // returns joe.m_name by reference
+	return 0;
+}
+```
+
+
+
+```cpp
+class Employee
+{
+	std::string m_name{};
+public:
+	void setName(std::string_view name) { m_name = name; }
+	const std::string& getName() const { return m_name; } //  getter returns by const reference
+};
+
+// createEmployee() returns an Employee by value (which means the returned value is an rvalue)
+Employee createEmployee(std::string_view name)
+{
+	Employee e;
+	e.setName(name);
+	return e;
+}
+
+int main()
+{
+	// Case 1: okay: use returned reference to member of rvalue class object in same expression
+	std::cout << createEmployee("Frank").getName();
+	// Case 2: bad: save returned reference to member of rvalue class object for use later
+	const std::string& ref { createEmployee("Garbo").getName() }; // reference becomes dangling when return value of createEmployee() is destroyed
+	std::cout << ref; // undefined behavior
+	// Case 3: okay: copy referenced value to local variable for use later
+	std::string val { createEmployee("Hans").getName() }; // makes copy of referenced member
+	std::cout << val; // okay: val is independent of referenced member
+	return 0;
+}
+```
+
+
+
+**Never return non-const references to private data members**
+
+**Const member functions can’t return non-const references to data members**
