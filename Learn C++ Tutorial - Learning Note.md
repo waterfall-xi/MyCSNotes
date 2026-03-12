@@ -7015,6 +7015,40 @@ int main()
 }
 ```
 
+
+
+**提前一说** 建议通过这样的方式实现 class invariant：
+
+```cpp
+class Fraction
+{
+ public:
+    void setNumerator(int n) {
+        m_numerator = n;
+    };
+    void setDenominator(int n) {
+        if (n != 0) {  // When modifying externally (public interfaces), the invariant (check) must be implemented
+            m_denominator = n;
+        }
+    };
+ private:
+    void makeHalf() {
+        // solution A: Just use setDenominator() because it guarantees that the change will not affect the invariant
+		setDenominator(m_denominator * 2);
+        // solution B: Change m_denominator directly, because makeHalf() assumes that m_denominator not 0, then m_denominator *= 2 is not 0 either
+		m_denominator *= 2;
+    }
+    int m_numerator { 0 };
+    int m_denominator { 1 }; // class invariant: should never be 0
+};
+```
+
+也就是说，相比struct默认数据成员公有（虽然也可以声明为私有，但一般这种情况下会直接考虑使用class），从而使外部可以随意改变`m_denominator`导致不变式失效。class可以利用成员访问权限实现封装，以及在公有成员函数处增加不变式逻辑，确保不变式成立。
+
+更特别地，类内部的私有成员函数，可以默认不变式是成立的（`makeHalf()`中的solution B）;且实际上，C++社区普遍共识是，只要能做到，尽可能采用soluton B，因为效率更高，更灵活。
+
+但这依然是一个不成熟的方案，14.8 — The benefits of data hiding (encapsulation) 将再次讲解一个更完善的Fraction版本
+
 ## 14.3 — Member functions
 
 ```cpp
