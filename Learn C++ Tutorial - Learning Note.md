@@ -7339,3 +7339,189 @@ int main()
 **Never return non-const references to private data members**
 
 **Const member functions can’t return non-const references to data members**
+
+## 14.8 — The benefits of data hiding (encapsulation)
+
+**It is recommended to read the original text directly**
+
+### Encapsulation is good for implementing invariants and error detection/handling
+
+考虑以下不变式设计一个分数类：
+
+```
+gcd(numerator, denominator) = 1  // greatest common divisor = 1
+denominator > 0
+```
+
+其中gcd (greatest common divisor) = 1意味着分子和分母互质，这个约束是为了避免把类似$1/4$和$3/12$这样的等价分数视为不同的。所以这个`Fraction`类应该是被设计为表示一个分数数值，而不是一个分数的书写表示形式。
+
+分母大于0同时包含了分母不为负数（没有负号）和分母不为0两个约束，分母不为负数同样是为了实现等价分数特性（默认统一表示为分母没有负号，负号只在分子中存在）。
+
+```cpp
+class Fraction
+{
+ public:
+    Fraction(int n = 0, int d = 1)
+    {
+        if (d == 0)
+            ;  // handling
+        m_numerator = n;
+        m_denominator = d;
+        normalize();
+    }
+    int numerator() const { return m_numerator; }
+    int denominator() const { return m_denominator; }
+    // No setNumerator and setDenominator now,
+ private:
+    void normalize()
+    {
+        int g = std::gcd(m_numerator, m_denominator);
+        m_numerator /= g;
+        m_denominator /= g;
+
+        if (m_denominator < 0) {
+            m_numerator = -m_numerator;
+            m_denominator = -m_denominator;
+        }
+    }
+    int m_numerator { 0 };
+    int m_denominator { 1 }; // class invariant: should never be 0
+};
+```
+
+**abstraction layer**: 现在没有分子与分母的setter了，因为这个分数类需要实现等价分数特性，我们不希望用户指定分子和分母，因为用户指定的数值有可能因为`normalize()`而改变，而用户往往会期待调用setter设置分母后分母应该变成这个数值。甚至同时指定分子和分母的setter也不要了，同样地，因为这其实也会因为`normalize()`导致内部的分子和分母并不是用户认为的那样。这其实就是**immutable objects（不可变对象）**。
+
+**implementation layer**: 用`normalize()`实现了centralized repair（集中修复），且由于没有公有seeter，分子和分母属性在初始化后就不再改变。如果外部用户希望赋予某个分数对象一个新值，不是通过setter修改原来的对象的数值，而是重新赋予一个新的分数对象（`Fraction`的数据内容很少，构造成本并不高，且由于现代C++编译器可以实现RVO (Return Value Optimization)来消除拷贝成本）。这其实就是**value semantics（值语义）**思想，也就是两个类对象如果其值完全系统，那么语义上就是等价的。
+
+在进化一下，实现运算符的重载。
+
+```cpp
+class Fraction
+{
+public:
+    Fraction(int n = 0, int d = 1)
+    {
+        //...
+    }
+
+    int numerator() const { return m_numerator; }
+    int denominator() const { return m_denominator; }
+    Fraction& operator+=(const Fraction& other)
+    {
+        m_numerator = m_numerator * other.m_denominator +
+                      other.m_numerator * m_denominator;
+
+        m_denominator = m_denominator * other.m_denominator;
+
+        normalize();
+        return *this;
+    }
+    Fraction& operator-=(const Fraction& other)
+    {
+        m_numerator = m_numerator * other.m_denominator -
+                      other.m_numerator * m_denominator;
+        m_denominator = m_denominator * other.m_denominator;
+        normalize();
+        return *this;
+    }
+    Fraction& operator*=(const Fraction& other)
+    {
+        m_numerator *= other.m_numerator;
+        m_denominator *= other.m_denominator;
+        normalize();
+        return *this;
+    }
+    Fraction& operator/=(const Fraction& other)
+    {
+        // Look at here
+        if (other.m_numerator == 0)
+            ;  // handling
+        m_numerator *= other.m_denominator;
+        m_denominator *= other.m_numerator;
+        normalize();
+        return *this;
+    }
+
+private:
+    //...
+};
+Fraction operator+(Fraction lhs, const Fraction& rhs)
+{
+    int n =
+        lhs.numerator() * rhs.denominator() +
+        rhs.numerator() * lhs.denominator();
+
+    int d =
+        lhs.denominator() * rhs.denominator();
+
+    return Fraction(n, d);
+}
+Fraction operator-(Fraction lhs, const Fraction& rhs)
+{
+    int n = lhs.numerator() * rhs.denominator() - rhs.numerator() * lhs.denominator();
+    int d = lhs.denominator() * rhs.denominator();
+    return Fraction(n, d);
+}
+Fraction operator*(Fraction lhs, const Fraction& rhs)
+{
+    int n = lhs.numerator() * rhs.numerator();
+    int d = lhs.denominator() * rhs.denominator();
+    return Fraction(n, d);
+}
+Fraction operator/(Fraction lhs, const Fraction& rhs)
+{
+    int n = lhs.numerator() * rhs.denominator();
+    int d = lhs.denominator() * rhs.numerator();
+    return Fraction(n, d);
+}
+bool operator==(const Fraction& a, const Fraction& b)
+{
+    return a.numerator() == b.numerator() && a.denominator() == b.denominator();
+}
+bool operator!=(const Fraction& a, const Fraction& b)
+{
+    return !(a == b);
+}
+//...
+```
+
+想象一下，如果`Fraction`没有实现**immutable objects（不可变对象）**和**value semantics（值语义）**再实现上面这些重载会怎么样
+
+### Data hiding makes it possible to change implementation details without breaking existing programs
+
+**数据隐藏使得修改实现细节同时不会破坏现有（外部）程序成为可能**
+
+### Classes with interfaces are easier to debug
+
+**带接口的类更容易调试**
+
+### Prefer non-member functions to member functions
+
+**优先选择非成员函数而非成员函数**
+
+### The order of class member declaration
+
+**类别成员声明的顺序**
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Public first, protected next, and private last.<br>
+        先public，再protected，最后private。
+	</p>>
+    <p style="margin: 1;">
+        The following order is recommended by the Google C++ style guide:<br>
+        以下是Google C++风格指南推荐的顺序：
+	</p>
+    <p style="margin: 1;">
+        ● Types and type aliases (typedef, using, enum, nested structs and classes, and friend types)<br>
+        ● Static constants<br>
+        ● Factory functions<br>
+        ● Constructors and assignment operators<br>
+        ● Destructor<br>
+        ● All other functions (static and non-static member functions, and friend functions)<br>
+        ● Data members (static and non-static)
+	</p>
+</div>
