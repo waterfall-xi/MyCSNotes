@@ -7393,7 +7393,7 @@ class Fraction
 
 **implementation layer**: 用`normalize()`实现了centralized repair（集中修复），且由于没有公有seeter，分子和分母属性在初始化后就不再改变。如果外部用户希望赋予某个分数对象一个新值，不是通过setter修改原来的对象的数值，而是重新赋予一个新的分数对象（`Fraction`的数据内容很少，构造成本并不高，且由于现代C++编译器可以实现RVO (Return Value Optimization)来消除拷贝成本）。这其实就是**value semantics（值语义）**思想，也就是两个类对象如果其值完全系统，那么语义上就是等价的。
 
-在进化一下，实现运算符的重载。
+再进化一下，实现运算符的重载。
 
 ```cpp
 class Fraction
@@ -7499,6 +7499,39 @@ bool operator!=(const Fraction& a, const Fraction& b)
 
 **优先选择非成员函数而非成员函数**
 
+```cpp
+if (f needs to be virtual)
+{
+	make f a member function of C;
+}
+else if (f is operator>> or operator<<)
+{
+	make f a non-member function;
+	if (f needs access to non-public members of C)
+	{
+		make f a friend of C;
+	}
+}
+else if (f needs type conversions on its left-most argument)
+{
+	make f a non-member function;
+	if (f needs access to non-public members of C)
+	{
+		make f a friend of C;
+	}
+}
+else if (f can be implemented via C's public interface)
+{
+	make f a non-member function;
+}
+else
+{
+	make f a member function of C;
+}
+```
+
+
+
 ### The order of class member declaration
 
 **类别成员声明的顺序**
@@ -7510,7 +7543,7 @@ bool operator!=(const Fraction& a, const Fraction& b)
     <p style="margin: 1;">
         Public first, protected next, and private last.<br>
         先public，再protected，最后private。
-	</p>>
+	</p>
     <p style="margin: 1;">
         The following order is recommended by the Google C++ style guide:<br>
         以下是Google C++风格指南推荐的顺序：
