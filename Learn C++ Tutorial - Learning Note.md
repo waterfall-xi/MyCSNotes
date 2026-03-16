@@ -7530,8 +7530,6 @@ else
 }
 ```
 
-
-
 ### The order of class member declaration
 
 **类别成员声明的顺序**
@@ -7558,3 +7556,31 @@ else
         ● Data members (static and non-static)
 	</p>
 </div>
+
+## 14.9 — Introduction to constructors
+
+```cpp
+class Foo // Foo is not an aggregate (has private members)
+{
+    int m_x {};
+    int m_y {};
+};
+
+Foo foo { 6, 7 }; // compile error: can not use aggregate initialization
+```
+
+Not allowing class types with private members to be initialized via aggregate initialization
+不允许通过聚合初始化初始化包含私有成员的类类型
+
+- Aggregate initialization requires knowing about the implementation of the class (since you have to know what the members are, and what order they were defined in), which we’re intentionally trying to avoid when we hide our data members.
+    聚合初始化需要了解类的实现（因为你必须知道成员是什么，以及它们的定义顺序），我们在隐藏数据成员时有意避免这一点。
+- If our class had some kind of invariant, we’d be relying on the user to initialize the class in a way that preserves the invariant.
+    如果我们的类有某种不变量，我们就依赖用户以保持不变量的方式初始化类。
+
+### Constructors
+
+- Must have the same name as the class (with the same capitalization). For template classes, this name excludes the template parameters.
+    构造器必须与该类别名称相同（大小写相同）。对于模板类，这个名称不包含模板参数。
+- No return type (not even `void`)
+- Usually public
+- Not const
