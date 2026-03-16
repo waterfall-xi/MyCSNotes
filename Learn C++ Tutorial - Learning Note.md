@@ -7584,3 +7584,146 @@ Not allowing class types with private members to be initialized via aggregate in
 - No return type (not even `void`)
 - Usually public
 - Not const
+
+## 14.10 — Constructor member initializer lists
+
+```cpp
+class Foo
+{
+private:
+    int m_x {};
+    int m_y {};
+public:
+    Foo(int x, int y)
+        : m_x { x }, m_y { y } // here's our member initialization list
+    {
+        std::cout << "Foo(" << x << ", " << y << ") constructed\n";
+    }
+    void print() const
+    {
+        std::cout << "Foo(" << m_x << ", " << m_y << ")\n";
+    }
+};
+```
+
+
+
+```
+: m_x { x }   // direct list initialization, preferably
+: m_x ( x )   // direct initialization, unrecommended, may narrowing conversion
+: m_x  = x    // ❌ error, copy initialization is not allowed
+```
+
+The members in a member initializer list are **always initialized in the order in which they are defined inside the class (not in the order they are defined in the member initializer list)**.
+成员初始化器列表中的成员**总是按照类内定义的顺序初始化（而不是成员初始化器列表中定义的顺序）**。
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Member variables in a member initializer list should be listed in order that they are defined in the class.<br>
+        成员初始化器列表中的成员变量应按类中定义的顺序列出。
+	</p>
+    <p style="margin: 1;">
+        It’s also a good idea to avoid initializing members using the value of other members (if possible).<br>
+        如果可能的话，最好避免用其他成员的值初始化成员。
+	</p>
+</div>
+
+- If a member is listed in the member initializer list, that initialization value is used
+    如果成员在成员初始化器列表中被列出，则使用该初始化值
+- Otherwise, if the member has a default member initializer, that initialization value is used
+    否则，如果成员有默认的成员初始化器，则使用该初始化值
+- Otherwise, the member is default-initialized. 否则，该成员会被默认初始化。
+
+### When constructors fail
+
+- a) Resolve the error within the function. 解决函数中的错误。
+- b) Pass the error back to the caller to deal with. 把错误反馈给调用方处理。
+- c) Halt the program. 停止这个程序。
+- d) Throw an exception. 抛出exception。
+
+```cpp
+class Fraction
+{
+public:
+    Fraction(int n = 0, int d = 1)
+    {
+        // b)
+        if (d == 0) {
+            m_valid = false;
+            m_numerator = 0;
+            m_denominator = 1;
+            return;
+        }
+        m_numerator = n;
+        m_denominator = d;
+        normalize();
+        // d)
+        if (d == 0)
+            throw std::invalid_argument("denominator cannot be zero");
+    }
+    bool isValid() const
+    {
+        return m_valid;
+    }
+    int numerator() const { return m_numerator; }
+    int denominator() const { return m_denominator; }
+private:
+    void normalize()
+    {
+        // ...
+    }
+
+private:
+    int m_numerator { 0 };
+    int m_denominator { 1 };
+    bool m_valid { true };
+};
+```
+
+Or you can:
+
+```cpp
+class Fraction
+{
+private:
+    int m_numerator { 0 };
+    int m_denominator { 1 };
+
+    // private constructor can't be called by public
+    Fraction(int numerator, int denominator):
+        m_numerator { numerator }, m_denominator { denominator }
+    {
+    }
+
+public:
+    // Allow this function to access private members
+    friend std::optional<Fraction> createFraction(int numerator, int denominator);
+};
+
+std::optional<Fraction> createFraction(int numerator, int denominator)
+{
+    if (denominator == 0)
+        return {};
+
+    return Fraction{numerator, denominator};
+}
+
+int main()
+{
+    auto f1 { createFraction(0, 1) };
+    if (f1)
+    {
+        std::cout << "Fraction created\n";
+    }
+
+    auto f2 { createFraction(0, 0) };
+    if (!f2)
+    {
+        std::cout << "Bad fraction\n";
+    }
+}
+```
+
