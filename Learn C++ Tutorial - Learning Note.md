@@ -7727,3 +7727,228 @@ int main()
 }
 ```
 
+## 14.11 — Default constructors and default arguments
+
+### Default constructors
+
+```cpp
+class Foo
+{
+public:
+    Foo() // default constructor
+    {
+        ;
+    }
+};
+```
+
+A **default constructor** is a constructor that accepts no arguments.
+**默认构造函数**是指不接受任何参数的构造函数。
+
+```cpp
+Foo foo{};  // value initialization, calls Foo() default constructor
+Foo foo2;  // default initialization, calls Foo() default constructor
+```
+
+However, as we already covered in lesson [13.9 -- Default member initialization](https://www.learncpp.com/cpp-tutorial/default-member-initialization/), value initialization is safer for aggregates. Since it’s difficult to tell whether a class type is an aggregate or non-aggregate, it’s safer to just use value initialization for everything and not worry about it.
+然而，正如我们在[第13.9](https://www.learncpp.com/cpp-tutorial/default-member-initialization/)课中已经讨论过的——默认成员初始化，值初始化对聚合更安全。由于很难判断一个类类型是聚合还是非聚合，所以用值初始化来处理所有内容更安全，不用太在意。
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Prefer value initialization over default initialization for all class types.<br>
+        所有类类型都优先使用值初始化而非默认初始化。
+	</p>
+</div>
+
+```cpp
+class Foo
+{
+public:
+    Foo(int x=0, int y=0) // has default arguments
+        : m_x { x }, m_y { y }
+    {
+        ;
+    }
+private:
+    int m_x { };
+    int m_y { };
+};
+```
+
+If all of the parameters in a constructor have default arguments, the constructor is a default constructor (because it can be called with no arguments).
+如果构造函数中的所有参数都有默认参数，则该构造函数是默认构造函数（因为它可以无参数调用）。
+
+### Overloaded constructors
+
+```cpp
+class Foo
+{
+public:
+    Foo() // default constructor
+    {
+        ;
+    }
+    Foo(int x, int y) // non-default constructor
+        : m_x { x }, m_y { y }
+    {
+        ;
+    }
+private:
+    int m_x {};
+    int m_y {};
+};
+
+Foo foo{}; // compile error: ambiguous constructor function call
+```
+
+A class should only have one default constructor. If more than one default constructor is provided, the compiler will be unable to disambiguate which should be used.
+一个类应该只有一个默认构造器。如果提供了多个默认构造函数，编译器将无法区分应使用哪种。
+
+Do this can solve it
+
+```cpp
+class Foo
+{
+public:
+    Foo() = default; // generates an explicitly defaulted default constructor
+    Foo(int x, int y) // non-default constructor
+        : m_x { x }, m_y { y }
+    {
+        ;
+    }
+};
+```
+
+### Explicitly defaulted default constructor vs Empty user-defined constructor
+
+**Explicitly defaulted default constructor**
+
+```cpp
+class Default
+{
+public:
+    Default() = default; // explicitly defaulted default constructor
+    int a() const { return m_a; }
+    int b() const { return m_b; }
+private:
+    int m_a; // note: no default initialization value
+    int m_b {};
+};
+```
+
+**Implicit default constructor**
+
+```cpp
+class Implicit
+{
+public:
+    // implicit default constructor
+	// ...
+private:
+    int m_a; // note: no default initialization value
+    int m_b {};
+};
+```
+
+**Empty user-defined constructor**
+
+```cpp
+class User
+{
+public:
+    User() {} // user-defined empty constructor
+private:
+    int m_a; // note: no default initialization value
+    int m_b {};
+};
+```
+
+Test:
+
+```cpp
+int main()
+{
+    User user{}; // default initialized
+    std::cout << user.a() << ' ' << user.b() << '\n';
+    Default def{}; // zero initialized, then default initialized
+    std::cout << def.a() << ' ' << def.b() << '\n';
+    Implicit imp{}; // zero initialized, then default initialized
+    std::cout << imp.a() << ' ' << imp.b() << '\n';
+
+    return 0;
+}
+```
+
+```
+782510864 0
+0 0
+0 0
+```
+
+| **default constructor**                  | Default initialization                                       | Value initialization                                         |
+| ---------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| Explicitly defaulted default constructor | default init<br />dangerous❗                                 | zero init + default init<br />slow                           |
+| Implicit default constructor             | default init<br />dangerous❗                                 | zero init + default init<br />slow                           |
+| Empty user-defined constructor           | user-defined constructor (empty)<br />potentially dangerous❗ | user-defined constructor (empty)<br />potentially dangerous❗ |
+
+> In C++20 onward, the class `Default` is also a non-aggregate class.
+
+### When should you use the (Implicit) default constructor?
+
+```cpp
+class Fraction
+{
+private:
+    int m_numerator{ 0 };
+    int m_denominator{ 1 };
+
+public:
+    Fraction() = default;
+    Fraction(int numerator, int denominator)
+        : m_numerator{ numerator }
+        , m_denominator{ denominator }
+    {
+    }
+};
+
+Fraction f1 {3, 5};
+Fraction f2 {}; // will get Fraction 0/1
+```
+
+**It makes sense to create a `Fraction` with no initializers but initialize defaultly to $\frac{0}{1}$** => use the (Implicit) default constructor
+
+```cpp
+class Employee
+{
+private:
+    std::string m_name{ };  // ""
+    int m_id{ };  // 0
+public:
+    Employee(std::string_view name, int id)
+        : m_name{ name }
+        , m_id{ id }
+    {
+    }
+
+    void print() const
+    {
+        std::cout << "Employee(" << m_name << ", " << m_id << ")\n";
+    }
+};
+
+int main()
+{
+    Employee e1 { "Joe", 1 };
+    e1.print();
+
+    Employee e2 {}; // compile error: no matching constructor
+    e2.print();
+
+    return 0;
+}
+```
+
+It makes no sense to create a `Employee` with no initializers but initialize defaultly to `name = ""` (at least that's what the design is considering) => don't use the (Implicit) default constructor, to prohibit users from doing so.
