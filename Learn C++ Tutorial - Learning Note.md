@@ -7952,3 +7952,176 @@ int main()
 ```
 
 It makes no sense to create a `Employee` with no initializers but initialize defaultly to `name = ""` (at least that's what the design is considering) => don't use the (Implicit) default constructor, to prohibit users from doing so.
+
+## 14.12 — Delegating constructors
+
+If you find some constructors do something same...
+
+```cpp
+class Employee
+{
+private:
+    std::string m_name { "???" };
+    int m_id { 0 };
+    bool m_isManager { false };
+public:
+    Employee(std::string_view name, int id)
+        : m_name{ name }, m_id { id } // this constructor initializes name and id
+    {
+        std::cout << "Employee " << m_name << " created\n"; // our print statement is back here
+    }
+    Employee(std::string_view name, int id, bool isManager)
+        : m_isManager { isManager } // this constructor initializes m_isManager
+    {
+        // Call Employee(std::string_view, int) to initialize m_name and m_id
+        Employee(name, id); // this doesn't work as expected!
+    }
+    const std::string& getName() const { return m_name; }
+};
+
+int main()
+{
+    Employee e2{ "Dave", 42, true };
+    std::cout << "e2 has name: " << e2.getName() << "\n"; // print e2.m_name
+}
+```
+
+```
+Employee Dave created
+e2 has name: ???
+```
+
+Call `Employee(name, id);` will direct-initialize a temporary object instead of initialize the current object (tihs).
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Constructors should not be called directly from the body of another function. Doing so will either result in a compilation error, or will direct-initialize a temporary object.<br>
+		构造函数不应直接从其他函数的正体调用。这样做会导致编译错误，或者直接初始化临时对象。
+	</p>
+    <p style="margin: 1;">
+    	If you do want a temporary object, prefer list-initialization (which makes it clear you are intending to create an object).<br>
+		如果你确实想要临时对象，建议使用列表初始化（这表明你打算创建对象）。
+	</p>
+</div>
+
+### Delegating constructors
+
+```cpp
+class Employee
+{
+private:
+    std::string m_name { "???" };
+    int m_id { 0 };
+    bool m_isManager { false };
+public:
+    Employee(std::string_view name, int id)
+        : Employee{name, id, false}
+    {
+    }
+    Employee(std::string_view name, int id, bool isManager)
+        : m_name{ name }, m_id { id }, m_isManager { isManager }
+    {
+        std::cout << "Employee " << m_name << " created\n"; // our print statement is back here
+    }
+    const std::string& getName() const { return m_name; }
+};
+```
+
+A constructor that delegates to another constructor is not allowed to do any member initialization itself. So your constructors can delegate or initialize, but not both.
+将委派给另一个构造器的构造器不允许自己进行任何成员初始化。所以你的构造者可以委派或初始化，但不能两者兼用。
+
+Second, it’s possible for one constructor to delegate to another constructor, which delegates back to the first constructor. This forms an infinite loop, and will cause your program to run out of stack space and crash. You can avoid this by ensuring all of your constructors resolve to a non-delegating constructor.
+其次，一个构造器可以委派给另一个建构者，再委派回第一个建构者。这形成了一个无限循环，会导致程序堆叠空间耗尽并崩溃。你可以通过确保所有构造器都结算为非委派构建器来避免这种情况。
+
+## 14.13 — Temporary class objects
+
+```cpp
+class IntPair
+{
+private:
+    int m_x{};
+    int m_y{};
+public:
+    IntPair(int x, int y)
+        : m_x { x }, m_y { y }
+    {}
+    int x() const { return m_x; }
+    int y() const{ return m_y; }
+};
+
+void print(IntPair p)
+{
+    std::cout << "(" << p.x() << ", " << p.y() << ")\n";
+}
+
+int main()
+{
+    // Case 1: Pass variable
+    IntPair p { 3, 4 };
+    print(p);
+    // Case 2: Construct temporary IntPair and pass to function
+    print(IntPair { 5, 6 } );
+    // Case 3: Implicitly convert { 7, 8 } to a temporary Intpair and pass to function
+    print( { 7, 8 } );
+
+    return 0;
+}
+```
+
+**Creating temporary objects via direct initialization `{}`**
+
+### `static_cast` vs explicit instantiation of a temporary object
+
+```cpp
+void printString(const std::string &s)
+{
+    std::cout << s << '\n';
+}
+
+int main()
+{
+    std::string_view sv { "Hello" };
+//    printString(sv); // compile error: a std::string_view won't implicitly convert to a std::string
+    printString( static_cast<std::string>(sv) ); // Case 1: static_cast returns a temporary std::string direct-initialized with sv
+    printString( std::string { sv } );           // Case 2: explicitly creates a temporary std::string list-initialized with sv
+    printString( std::string ( sv ) );           // Case 3: C-style cast returns temporary std::string direct-initialized with sv (avoid this one!)
+
+    return 0;
+}
+```
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        As a quick rule of thumb: Prefer static_cast when converting to a fundamental type, and a list-initialized temporary when converting to a class type.<br>
+        简单来说：转换到基本类型static_cast时优先使用，转换到类类型时使用列表初始化的临时。
+	</p>
+    <p style="margin: 1;">
+        Prefer static_cast when to create a temporary object when any of the following are true:<br>
+        当以下任一条件成立时，优先选择static_cast创建临时对象：
+	</p>
+    <p style="margin: 1;">
+        ● We need to performing a narrowing conversion.<br>
+          我们需要进行缩小转换。<br>
+        ● We want to make it really obvious that we’re converting to a type that will result in some different behavior (e.g. a char to an int).<br>
+          我们想让它非常明显地表明我们正在转换到一个类型，这种类型会导致某些不同的行为（例如，a char 到 a int ）。<br>
+        ● We want to use direct-initialization for some reason (e.g. to avoid list constructors taking precedence).<br>
+          出于某种原因，我们想使用直接初始化（例如避免列表构造器优先）。
+	</p>
+    <p style="margin: 1;">
+        Prefer creating a new object (using list initialization) to create a temporary object when any of the following are true:<br>
+        当以下任一条件成立时，建议通过创建新对象（使用列表初始化）来创建临时对象：
+	</p>
+    <p style="margin: 1;">
+        ● We want to use list-initialization (e.g. for the protection against narrowing conversions, or because we need to invoke a list constructor).<br>
+          我们希望使用列表初始化（例如防止狭窄转换，或因为需要调用列表构造器）。<br>
+        ● We need to provide additional arguments to a constructor to facilitate the conversion.<br>
+          我们需要向构造子提供额外的论据以促进转换。
+	</p>
+</div>
+
