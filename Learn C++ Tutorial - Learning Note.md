@@ -8125,3 +8125,128 @@ int main()
 	</p>
 </div>
 
+## 14.14 — Introduction to the copy constructor
+
+```cpp
+class Fraction
+{
+private:
+    int m_numerator{ 0 };
+    int m_denominator{ 1 };
+public:
+    // Default constructor
+    Fraction(int numerator=0, int denominator=1)
+        : m_numerator{numerator}, m_denominator{denominator}
+    {
+    }
+};
+
+Fraction f { 5, 3 };  // Calls Fraction(int, int) constructor
+Fraction fCopy { f }; // What constructor is used here?
+```
+
+### Implicit copy constructor
+
+If you do not provide a copy constructor for your classes, C++ will create a public **implicit copy constructor** for you. In the above example, the statement `Fraction fCopy { f };` is invoking the implicit copy constructor to initialize `fCopy` with `f`.
+如果你没有为类提供复制构造器，C++ 会为你创建一个公有**隐式复制构造器**。在上述示例中，语句`Fraction fCopy { f };`调用隐式复制构造子以初始化 `fCopy` 。`f`
+
+### Explicitl copy constructor
+
+```cpp
+class Fraction
+{
+private:
+    int m_numerator{ 0 };
+    int m_denominator{ 1 };
+public:
+    Fraction(int numerator=0, int denominator=1)
+        : m_numerator{numerator}, m_denominator{denominator}
+    {
+    }
+    // Copy constructor
+    Fraction(const Fraction& fraction)
+        // Initialize our members using the corresponding member of the parameter
+        : m_numerator{ fraction.m_numerator }
+        , m_denominator{ fraction.m_denominator }
+    {
+        std::cout << "Copy constructor called\n"; // just to prove it works
+    }
+};
+```
+
+A copy constructor should not do anything other than copy an object. This is because the compiler may optimize the copy constructor out in certain cases. If you are relying on the copy constructor for some behavior other than just copying, that behavior may or may not occur. We discuss this further in lesson [14.15 -- Class initialization and copy elision](https://www.learncpp.com/cpp-tutorial/class-initialization-and-copy-elision/).
+复制构造器不应做除复制对象以外的任何操作。这是因为编译器在某些情况下可能会优化复制构造器。如果你依赖复制构造器执行除复制之外的行为，这种行为可能会发生也可能不会发生。我们在[第14.15课——类初始化与复制省略](https://www.learncpp.com/cpp-tutorial/class-initialization-and-copy-elision/)中进一步讨论。
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Copy constructors should have no side effects beyond copying.<br>
+		复制构造器除了复制之外，应该没有其他副作用。
+	</p>
+    <p style="margin: 1;">
+        If you write your own copy constructor, the parameter should be a const lvalue reference..<br>
+		如果你自己写复制构造器，参数应该是cont lvalue的引用。
+	</p>
+</div>
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Prefer the implicit copy constructor.<br>
+		更倾向于隐式复制构造器。
+	</p>
+</div>
+
+**When an object is passed by value, the argument is copied into the parameter. When the argument and parameter are the same class type, the copy is made by implicitly invoking the copy constructor.**
+**当对象通过值传递时，实参数会被复制到形参中。当实参数和形参类型相同时，通过隐式调用复制构造子来实现复制。**
+
+**Returning by value creates a temporary object (holding a copy of the return value) that is passed back to the caller. When the return type and the return value are the same class type, the temporary object is initialized by implicitly invoking the copy constructor.**
+**按值返回会创建一个临时对象（包含返回值的副本），并返回给调用者。当返回类型和返回值为同一类类型时，临时对象通过隐式调用复制构造子来初始化。**
+
+### Using `= default` to generate a default copy constructor
+
+```cpp
+class Fraction
+{
+public:
+    // Default constructor
+    Fraction(int numerator=0, int denominator=1)
+        : m_numerator{numerator}, m_denominator{denominator}
+    {
+    }
+
+    // Explicitly request default copy constructor
+    Fraction(const Fraction& fraction) = default;
+private:
+    int m_numerator{ 0 };
+    int m_denominator{ 1 };
+};
+```
+
+### Using `= delete` to prevent copies
+
+```cpp
+class Fraction
+{
+public:
+    // Default constructor
+    Fraction(int numerator=0, int denominator=1)
+        : m_numerator{numerator}, m_denominator{denominator}
+    {
+    }
+
+    // Explicitly request default copy constructor
+    Fraction(const Fraction& fraction) = delete;
+private:
+    int m_numerator{ 0 };
+    int m_denominator{ 1 };
+};
+
+    Fraction f { 5, 3 };
+    Fraction fCopy { f }; // compile error: copy constructor has been deleted
+```
+
