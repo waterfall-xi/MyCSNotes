@@ -8250,3 +8250,262 @@ private:
     Fraction fCopy { f }; // compile error: copy constructor has been deleted
 ```
 
+## 14.15 — Class initialization and copy elision
+
+All initialization types for class types:
+
+```cpp
+class Foo
+{
+public:
+    // Default constructor
+    Foo()
+    {
+        std::cout << "Foo()\n";
+    }
+    // Normal constructor
+    Foo(int x)
+    {
+        std::cout << "Foo(int) " << x << '\n';
+    }
+    // Copy constructor
+    Foo(const Foo&)
+    {
+        std::cout << "Foo(const Foo&)\n";
+    }
+};
+
+int main()
+{
+    // Calls Foo() default constructor
+    Foo f1;           // default initialization
+    Foo f2{};         // value initialization (preferred)
+
+    // Calls foo(int) normal constructor
+    Foo f3 = 3;       // copy initialization (non-explicit constructors only)
+    Foo f4(4);        // direct initialization
+    Foo f5{ 5 };      // direct list initialization (preferred)
+    Foo f6 = { 6 };   // copy list initialization (non-explicit constructors only)
+
+    // Calls foo(const Foo&) copy constructor
+    Foo f7 = f3;      // copy initialization
+    Foo f8(f3);       // direct initialization
+    Foo f9{ f3 };     // direct list initialization (preferred)
+    Foo f10 = { f3 }; // copy list initialization
+
+    return 0;
+}
+```
+
+### Copy elision
+
+```cpp
+class Something
+{
+    int m_x{};
+public:
+    Something(int x)
+        : m_x{ x }
+    {
+        std::cout << "Normal constructor\n";
+    }
+    Something(const Something& s)
+        : m_x { s.m_x }
+    {
+        std::cout << "Copy constructor\n";
+    }
+    void print() const { std::cout << "Something(" << m_x << ")\n"; }
+};
+
+int main()
+{
+    Something s { Something { 5 } }; // focus on this line
+    s.print();
+
+    return 0;
+}
+```
+
+The copy constructor call will be optimized out by compiler.
+
+```
+Normal constructor
+// Copy constructor
+Something(5)
+```
+
+## 14.16 — Converting constructors and the explicit keyword
+
+### User-defined conversions
+
+In class types, constructors can be used for conversion
+在类类型中，构造函数可以用于类型转换
+
+```cpp
+class Foo
+{
+private:
+    int m_x{};
+public:
+    Foo(int x)
+        : m_x{ x }
+    {
+    }
+    int getX() const { return m_x; }
+};
+
+void printFoo(Foo f) // has a Foo parameter
+{
+    std::cout << f.getX();
+}
+
+int main()
+{
+    printFoo(5); // 5 -> Foo::Foo(5)
+
+    return 0;
+}
+```
+
+A constructor that can be used for implicit conversion is called a converting constructor
+可以用于隐式转换的构造函数称为 converting constructor
+
+By default, all constructors are converting constructors
+默认所有构造函数都是 converting constructor
+
+### Only one user-defined conversion allowed
+
+```cpp
+class Employee
+{
+private:
+    std::string m_name{};
+
+public:
+    Employee(std::string_view name)
+        : m_name{ name }
+    {
+    }
+
+    const std::string& getName() const { return m_name; }
+};
+
+void printEmployee(Employee e) // has an Employee parameter
+{
+    std::cout << e.getName();
+}
+
+int main()
+{
+    printEmployee("Joe"); // we're supplying an string literal argument
+
+    return 0;
+}
+```
+
+This version doesn’t compile!
+
+Only one user-defined conversion can be applied
+隐式转换中最多只能有一次用户自定义转换
+
+- `"Joe"` => `std::string_view`
+- `std::string_view` => `Employee
+
+### Solutions
+
+**Solution 1 Reduce to one conversion**
+
+```cpp
+using namespace std::literals;
+printEmployee("Joe"sv); // ok
+```
+
+**Solution 2 Explicitly construct object**
+
+```cpp
+printEmployee(Employee{"Joe"}); // ok
+```
+
+### The explicit keyword
+
+Implicit conversions may cause unexpected behavior.
+隐式转换可能导致意外行为。
+
+To address such issues, we can use the explicit keyword to tell the compiler that a constructor should not be used as a converting constructor.
+
+为解决此类问题，我们可以使用explicit关键词告知编译器，构造函数不应用作转换构造函数。
+
+```cpp
+class Dollars
+{
+private:
+    int m_dollars{};
+public:
+    explicit Dollars(int d) // now explicit
+        : m_dollars{ d }
+    {
+    }
+    int getDollars() const { return m_dollars; }
+};
+
+void print(Dollars d)
+{
+    std::cout << "$" << d.getDollars();
+}
+
+int main()
+{
+    Dollars d1(5); // ok
+    Dollars d2{5}; // ok
+    print(5); // compilation error because Dollars(int) is explicit
+    print(Dollars{5}); // ok: explicitly create a Dollars
+    print(static_cast<Dollars>(5)); // ok: static_cast will use explicit constructors
+
+    return 0;
+}
+```
+
+```cpp
+class Foo
+{
+public:
+    explicit Foo() // note: explicit (just for sake of example)
+    {
+    }
+
+    explicit Foo(int x) // note: explicit
+    {
+    }
+};
+
+Foo getFoo()
+{
+    // explicit Foo() cases
+    return Foo{ };   // ok
+    return { };      // error: can't implicitly convert initializer list to Foo
+
+    // explicit Foo(int) cases
+    return 5;        // error: can't implicitly convert int to Foo
+    return Foo{ 5 }; // ok
+    return { 5 };    // error: can't implicitly convert initializer list to Foo
+}
+
+int main()
+{
+    return 0;
+}
+```
+
+<div style="border: 2px solid #9cd49c; background-color: #dfffdf; border-radius: 8px; padding: 14px; margin: 5px;">
+    <p style="font-weight: bold; font-size: 1.1em; margin: 0 0 8px 0;">
+        Best practice
+    </p>
+    <p style="margin: 1;">
+        Make any constructor that accepts a single argument explicit by default. If an implicit conversion between types is both semantically equivalent and performant, you can consider making the constructor non-explicit.<br>
+		默认将任何接受单个参数的构造函数设为explicit。如果类型间隐式转换既语义等价又性能高，你可以考虑将构造函数设置为非显式。
+	</p>
+    <p style="margin: 1;">
+        Do not make copy or move constructors explicit, as these do not perform conversions.<br>
+		不要明确表示复制或移动构造器，因为它们不执行转换。
+	</p>
+</div>
