@@ -8509,3 +8509,218 @@ int main()
 		不要明确表示复制或移动构造器，因为它们不执行转换。
 	</p>
 </div>
+
+## 14.17 — Constexpr aggregates and classes
+
+### Constexpr member functions
+
+Member functions can be made `constexpr`, and may be evaluated at either compile-time or runtime
+成员函数可以声明为 `constexpr`，可在编译期或运行期求值
+
+```cpp
+struct Pair
+{
+    int m_x {};
+    int m_y {};
+
+    int greater() const
+    {
+        return (m_x > m_y ? m_x : m_y);
+    }
+};
+
+int main()
+{
+    Pair p { 5, 6 };
+    constexpr int g { p.greater() }; // error: greater() not constexpr
+}
+struct Pair
+{
+    int m_x {};
+    int m_y {};
+
+    constexpr int greater() const
+    {
+        return (m_x > m_y ? m_x : m_y);
+    }
+};
+
+int main()
+{
+    Pair p { 5, 6 };
+    constexpr int g { p.greater() }; // error: p not constexpr
+}
+```
+
+即使成员函数是 `constexpr`，对象本身也必须是 `constexpr`，否则表达式仍不是常量表达式。
+
+------
+
+### Constexpr aggregates
+
+```cpp
+struct Pair
+{
+    int m_x {};
+    int m_y {};
+
+    constexpr int greater() const
+    {
+        return (m_x > m_y ? m_x : m_y);
+    }
+};
+
+int main()
+{
+    constexpr Pair p { 5, 6 };
+    constexpr int g { p.greater() }; // ok
+}
+```
+
+Aggregates implicitly support `constexpr`
+聚合类型天然支持 `constexpr`
+
+------
+
+### Constexpr classes and constructors
+
+当类不再是 aggregate 时，需要 `constexpr` 构造函数
+
+```cpp
+class Pair
+{
+private:
+    int m_x {};
+    int m_y {};
+
+public:
+    Pair(int x, int y): m_x { x }, m_y { y } {}
+
+    constexpr int greater() const
+    {
+        return (m_x > m_y ? m_x : m_y);
+    }
+};
+
+int main()
+{
+    constexpr Pair p { 5, 6 }; // error: not a literal type
+}
+```
+
+In C++, an object can’t be constexpr unless its type is a literal type
+对象要成为 constexpr，其类型必须是 literal type
+
+```cpp
+class Pair
+{
+private:
+    int m_x {};
+    int m_y {};
+
+public:
+    constexpr Pair(int x, int y): m_x { x }, m_y { y } {}
+
+    constexpr int greater() const
+    {
+        return (m_x > m_y ? m_x : m_y);
+    }
+};
+
+int main()
+{
+    constexpr Pair p { 5, 6 };
+    constexpr int g { p.greater() }; // ok
+}
+```
+
+------
+
+### Constexpr in compile-time context
+
+```cpp
+class Pair
+{
+private:
+    int m_x {};
+    int m_y {};
+
+public:
+    constexpr Pair(int x, int y): m_x { x }, m_y { y } {}
+
+    constexpr int greater() const
+    {
+        return (m_x > m_y ? m_x : m_y);
+    }
+};
+
+constexpr int init()
+{
+    Pair p { 5, 6 };
+    return p.greater();
+}
+
+int main()
+{
+    constexpr int g { init() }; // evaluated at compile-time
+}
+```
+
+------
+
+### Constexpr and const (C++14)
+
+As of C++14, constexpr member functions are no longer implicitly const
+自 C++14 起，constexpr 成员函数不再隐式为 const
+
+需要时必须显式加上 `const`
+
+------
+
+### Constexpr non-const member functions
+
+```cpp
+class Pair
+{
+private:
+    int m_x {};
+    int m_y {};
+
+public:
+    constexpr Pair(int x, int y): m_x { x }, m_y { y } {}
+
+    constexpr void reset()
+    {
+        m_x = m_y = 0;
+    }
+
+    constexpr const int& getX() const { return m_x; }
+};
+
+constexpr Pair zero()
+{
+    Pair p { 1, 2 };
+    p.reset();
+    return p;
+}
+```
+
+A non-const member function can modify non-const objects
+非 const 成员函数可以修改非 const 对象
+
+constexpr 与 const 是两个独立维度
+constexpr 和 const 是两个独立概念
+
+------
+
+### Constexpr return types
+
+```cpp
+constexpr const int& getX() const { return m_x; }
+```
+
+- `constexpr`：函数可在编译期求值
+- `const int&`：返回类型
+- 右侧 `const`：成员函数为 const
+
+------
